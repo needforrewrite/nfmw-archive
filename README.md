@@ -16,7 +16,7 @@ No items should be uploaded without the item creator's consent, except if the it
 
 ## Usage
 
-config.toml (based from config.templace.toml) stores the *absolute* path to the directory where items will be stored. 
+config.toml (based from config.template.toml) stores the *absolute* path to the directory where items will be stored. 
 This directory can be directly exposed within a webserver in order to enable downloading of the files.
 The server checks if a `nfmw-archive` directory exists at the path. If it does not, it will make one and use that.
 
