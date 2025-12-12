@@ -68,6 +68,6 @@ All of these properties are optional, unless stated otherwise. If ommitted, they
 For cars:
 
 - Model (`model`)
-- Recharged (optional, but defaults to 0, must be stored as int 0 (false) or 1 (true))
+- Recharged (`recharged`, optional, but defaults to 0, must be stored as int 0 (false) or 1 (true))
 
 For wheels, stages, and custom stage pieces, there is at present no specific metadata.
