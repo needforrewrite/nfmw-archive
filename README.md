@@ -27,4 +27,8 @@ Collections may be added or removed over time, and there is no static list of av
 
 ### Account Management
 
-This server also acts as the account management system.
+This server also acts as the account management system. Each stored user has a username, a hash of their password and the salt of that hash. When the user tries to log in, the provided password is hashed and salted. If it matches the stored hash, the attempt is valid and the user is provided with an authentication token.
+
+When the client uses this token, it must first generate a random 64-byte long salt and then hash the token using that salt. Then, the client provides the username, hashed and salted token, and the salt. The server salts and hashes the stored token for that username, and if the hashes match, the token is valid. The salt can only be used once. This prevents any middleman from storing the token and attempting to use it as authentication to other services.
+
+In the context of the archive server, every attempt to download, upload or change a stored file counts as use of a salt and as such it should be regenerated after each.
