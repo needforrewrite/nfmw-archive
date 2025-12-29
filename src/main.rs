@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use axum::routing::get;
+use axum::routing::{get, post};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 
 use crate::{config::load_config};
@@ -31,8 +31,11 @@ async fn main() {
 
     let state = Arc::new(state::State { db_pool: pool });
 
-    let axum_router = Router::<()>::new()
-        .route("/", get(route::root));
+    let axum_router = Router::new()
+        .route("/", get(route::root))
+        .route("/create_account", post(route::create_account::create_account))
+        .route("/login", post(route::login::login))
+        .with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);
     let listener = tokio::net::TcpListener::bind(&addr)

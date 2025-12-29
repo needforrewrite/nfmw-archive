@@ -25,12 +25,36 @@ impl User {
         }
     }
 
+    /// Password must be at least 8 characters, one uppercase letter, one lowercase letter, one digit.
+    /// Cannot contain spaces and must be ASCII.
+    pub fn validate_password(password: &str) -> bool {
+        password.len() >= 8 
+            && password.chars().any(|c| c.is_uppercase()) 
+            && password.chars().any(|c| c.is_lowercase()) 
+            && password.chars().any(|c| c.is_digit(10))
+            && !password.chars().any(|c| c.is_whitespace())
+            && password.chars().all(|c| c.is_ascii())
+    }
+
     pub fn update_password(&mut self, new_password: String, must_change_password: bool) {
         let psalt = crate::crypto::generate_salt().to_vec();
         let phash = crate::crypto::hash_password(&new_password, &psalt);
         self.phash = phash;
         self.psalt = psalt;
         self.must_change_password = must_change_password;
+    }
+
+    pub async fn check_username_exists(&self, pool: &sqlx::PgPool) -> Result<bool, sqlx::Error> {
+        let record = sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM users WHERE username = $1
+            "#
+        )
+        .bind(&self.username)
+        .fetch_one(pool)
+        .await?;
+
+        Ok(record > 0)
     }
 
     pub async fn insert_or_update(&self, pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
