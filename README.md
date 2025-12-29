@@ -25,3 +25,6 @@ The filesystem divides the items by their type. For example, all cars live in ca
 
 Collections may be added or removed over time, and there is no static list of available collections at any one time, but the available collections must be synced between NFMW and the archive server - the archive server will accept anything as a collection, but the game is quite rigid on its collection definitions and will not be able to query anything in collections it does not recognise.
 
+### Account Management
+
+This server also acts as the account management system.

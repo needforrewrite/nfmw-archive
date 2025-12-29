@@ -1,6 +1,9 @@
-# server port
 port = 8081
-# secret for managing items
-secret = "hi"
-# base path for stored files
-store = "/var/www"
+filestore = "/var/www"
+
+[database]
+user = "nfmw"
+password = ""
+host = ""
+port = 12345
+db_name = "nfmw"
