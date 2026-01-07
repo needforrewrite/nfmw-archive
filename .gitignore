@@ -26,3 +26,5 @@ target
 /target
 
 config.toml
+
+.env

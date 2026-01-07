@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
 use axum::{Json, extract::State, http::StatusCode};
 
-use crate::db::user::User;
+use crate::{db::user::User, state::ThreadSafeState};
 
 #[derive(serde::Deserialize)]
 pub struct CreateAccountPayload {
@@ -10,11 +8,13 @@ pub struct CreateAccountPayload {
     pub password: String,
 }
 
-pub async fn create_account(State(state): State<Arc<crate::state::State>>, Json(payload): Json<CreateAccountPayload>) -> (StatusCode, Json<serde_json::Value>) {
+pub async fn create_account(State(state): State<ThreadSafeState>, Json(payload): Json<CreateAccountPayload>) -> (StatusCode, Json<serde_json::Value>) {
     let password = payload.password.clone();
-    let user = User::new_from_password(payload.username, payload.password, false);
+    let user = User::new_from_password(payload.username, payload.password, Some(false));
 
-    let username_exists = user.check_username_exists(&state.db_pool).await;
+    let pool = &state.lock().await.db_pool;
+
+    let username_exists = user.check_username_exists(pool).await;
     if let Err(e) = username_exists {
         eprintln!("Database error on username lookup: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"status": "internal server error"})));
@@ -28,7 +28,7 @@ pub async fn create_account(State(state): State<Arc<crate::state::State>>, Json(
         );
     }
 
-    let insert_result = user.insert_or_update(&state.db_pool).await;
+    let insert_result = user.insert_or_update(pool).await;
     if let Err(e) = insert_result {
         eprintln!("Database error on user insert: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"status": "internal server error"})));

@@ -14,6 +14,8 @@ impl UserToken {
     }
 
     pub async fn insert(&self, pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        // TODO: didnt make this table yet so dont use checked macro
+        
         sqlx::query(
             r#"
             INSERT INTO user_tokens (user_id, token)
@@ -28,6 +30,8 @@ impl UserToken {
     }
 
     pub async fn remove_all(user_id: i32, pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        // TODO: didnt make this table yet so dont use checked macro
+        
         sqlx::query(
             r#"
             DELETE FROM user_tokens WHERE user_id = $1

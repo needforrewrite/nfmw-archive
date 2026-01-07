@@ -9,10 +9,10 @@ pub struct User {
     pub phash: String,
     pub psalt: Vec<u8>,
     /// Indicates whether the user must change their password on next login
-    pub must_change_password: bool,
+    pub must_change_password: Option<bool>,
 }
 impl User {
-    pub fn new_from_password(username: String, password: String, must_change_password: bool) -> Self {
+    pub fn new_from_password(username: String, password: String, must_change_password: Option<bool>) -> Self {
         let psalt = crate::crypto::generate_salt().to_vec();
         let phash = crate::crypto::hash_password(&password, &psalt);
         User {
@@ -41,24 +41,22 @@ impl User {
         let phash = crate::crypto::hash_password(&new_password, &psalt);
         self.phash = phash;
         self.psalt = psalt;
-        self.must_change_password = must_change_password;
+        self.must_change_password = Some(must_change_password);
     }
 
     pub async fn check_username_exists(&self, pool: &sqlx::PgPool) -> Result<bool, sqlx::Error> {
-        let record = sqlx::query_scalar::<_, i64>(
-            r#"
-            SELECT COUNT(*) FROM users WHERE username = $1
-            "#
+        let record = sqlx::query_scalar!( 
+            "SELECT COUNT(*) FROM users WHERE username = $1",
+            self.username
         )
-        .bind(&self.username)
         .fetch_one(pool)
         .await?;
 
-        Ok(record > 0)
+        Ok(record.unwrap_or(0) > 0)
     }
 
     pub async fn insert_or_update(&self, pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-        sqlx::query(
+        sqlx::query!(
             r#"
             INSERT INTO users (username, phash, psalt, must_change_password)
             VALUES ($1, $2, $3, $4)
@@ -67,11 +65,12 @@ impl User {
                 phash = EXCLUDED.phash,
                 psalt = EXCLUDED.psalt,
                 must_change_password = EXCLUDED.must_change_password
-            "#
+            "#,
+            self.username,
+            self.phash,
+            self.psalt,
+            false
         )
-        .bind(&self.username)
-        .bind(&self.phash)
-        .bind(&self.psalt)
         .execute(pool)
         .await?;
         Ok(())
@@ -83,14 +82,14 @@ impl User {
     /// 
     /// We don't mark this as `pub` because we want to enforce password checking via `get_by_username_password`
     async fn get_by_username(pool: &sqlx::PgPool, username: &str) -> Result<Option<User>, sqlx::Error> {
-        let user = sqlx::query_as::<_, User>(
+        let user = sqlx::query_as!(Self, 
             r#"
-            SELECT id, username, phash, psalt
+            SELECT id, username, phash, psalt, must_change_password
             FROM users
             WHERE username = $1
-            "#
+            "#,
+            username
         )
-        .bind(username)
         .fetch_optional(pool)
         .await?;
         Ok(user)

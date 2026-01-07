@@ -1,13 +1,13 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Config {
     pub port: u16,
     pub filestore: String,
     pub database: DatabaseConfig,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct DatabaseConfig {
     pub user: String,
     pub password: String,

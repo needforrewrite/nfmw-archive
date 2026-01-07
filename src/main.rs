@@ -3,15 +3,20 @@ use std::sync::Arc;
 use axum::Router;
 use axum::routing::{get, post};
 use sqlx::postgres::{PgPool, PgPoolOptions};
+use tokio::sync::Mutex;
 
-use crate::{config::load_config};
+use crate::archive::index::index_archive;
+use crate::archive::parse::parse_line;
+use crate::config::load_config;
 use crate::db::user::User;
 
-mod crypto;
+mod archive;
 mod config;
+mod crypto;
 mod db;
-mod state;
+mod ffi;
 mod route;
+mod state;
 
 #[tokio::main]
 async fn main() {
@@ -29,11 +34,33 @@ async fn main() {
         config.database.host, config.database.port
     );
 
-    let state = Arc::new(state::State { db_pool: pool });
+    // TODO: for now, fully regenerate archive db on restart,
+    // but in future we can probably do some sanity checks
+    // to see if this is necessary as the size of the archive grows
+    let state = Arc::new(Mutex::new(state::State {
+        db_pool: pool,
+        index_state: state::IndexState::Regenerating,
+        config: load_config()
+    }));
+
+
+    let c = state.clone();
+    let idx = tokio::spawn(async {
+        let index_result = index_archive(c).await;
+        if let Err(e) = index_result {
+            eprintln!("Failed to index database! {e}")
+        }
+    }).await;
+    if let Err(e) = idx {
+        eprintln!("Failed to index database! {e}")
+    }
 
     let axum_router = Router::new()
         .route("/", get(route::root))
-        .route("/create_account", post(route::create_account::create_account))
+        .route(
+            "/create_account",
+            post(route::create_account::create_account),
+        )
         .route("/login", post(route::login::login))
         .with_state(state);
 
@@ -45,6 +72,4 @@ async fn main() {
     axum::serve(listener, axum_router)
         .await
         .expect("Failed to start server");
-
-    println!("Listening on {}", addr);
 }
