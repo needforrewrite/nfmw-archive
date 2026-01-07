@@ -1,0 +1,3 @@
+[submodule "nfm-world"]
+	path = nfm-world
+	url = https://github.com/needforrewrite/nfm-world

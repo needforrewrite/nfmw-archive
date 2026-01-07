@@ -9,6 +9,7 @@ use crate::archive::index::index_archive;
 use crate::archive::parse::parse_line;
 use crate::config::load_config;
 use crate::db::user::User;
+use crate::ffi::{SimulateTimeTrialArgs, nfmw_simulate_tt};
 
 mod archive;
 mod config;
