@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use axum::routing::{get, post};
+use axum::routing::{get, patch, post};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use tokio::sync::Mutex;
 
@@ -63,6 +63,7 @@ async fn main() {
             post(route::create_account::create_account),
         )
         .route("/login", post(route::login::login))
+        .route("/archive", patch(route::archive::create_item::create_archive_item))
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);

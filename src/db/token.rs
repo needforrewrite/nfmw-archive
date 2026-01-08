@@ -1,3 +1,5 @@
+use sqlx::PgPool;
+
 // A user can only have one active token at a time. Issuing a new token
 // invalidates any previous token.
 #[derive(sqlx::FromRow, Debug)]
@@ -27,6 +29,10 @@ impl UserToken {
         .execute(pool)
         .await?;
         Ok(())
+    }
+
+    pub async fn get_user_by_token(pool: &PgPool, token: String) -> Result<Option<UserToken>, sqlx::Error> {
+        todo!()
     }
 
     pub async fn remove_all(user_id: i32, pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {

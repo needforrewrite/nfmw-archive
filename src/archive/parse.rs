@@ -17,8 +17,11 @@ pub enum ArchiveFileParseError {
 impl Display for ArchiveFileParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::InvalidCharactersInField(i, j) => write!(f, "Invalid character(s) in field {i}: {j}"),
+            Self::FieldValueTooLong(i, j) => write!(f, "Field {i} has a maximum value length of {j} characters."),
+            Self::InvalidMusicPath(i) => write!(f, "Invalid music path: {i}"),
+            Self::MissingField(i) => write!(f, "Missing required field: {i}"),
             Self::Other(s) => write!(f, "Generic parse error: {s}"),
-            _ => write!(f, "Generic parse error"),
         }
     }
 }

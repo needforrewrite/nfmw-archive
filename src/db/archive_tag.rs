@@ -3,10 +3,10 @@ use sqlx::PgPool;
 #[derive(sqlx::FromRow, Debug)]
 pub struct ArchiveTag {
     pub tag_id: i32,
-    pub tag_name: String
+    pub tag_name: String,
 }
 impl ArchiveTag {
-    pub async fn create(pool: &PgPool, tag_name: String) -> Result<(), sqlx::Error> {
+    pub async fn create(pool: &PgPool, tag_name: String, protected: bool) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
             INSERT INTO archive_tags(tag_name)
