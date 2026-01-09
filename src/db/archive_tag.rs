@@ -6,7 +6,7 @@ pub struct ArchiveTag {
     pub tag_name: String,
 }
 impl ArchiveTag {
-    pub async fn create(pool: &PgPool, tag_name: String, protected: bool) -> Result<(), sqlx::Error> {
+    pub async fn create(pool: &PgPool, tag_name: String) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
             INSERT INTO archive_tags(tag_name)
@@ -18,6 +18,20 @@ impl ArchiveTag {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn get_id_from_name(pool: &PgPool, name: String) -> Result<Option<i32>, sqlx::Error> {
+        let out = sqlx::query_as!(ArchiveTag, r#"
+            SELECT * from archive_tags
+            WHERE tag_name = $1
+            "#,
+            &name
+        )
+        .fetch_optional(pool)
+        .await?
+        .map(|x| x.tag_id);
+
+        Ok(out)
     }
 
     pub async fn remove(&self, pool: &PgPool) -> Result<(), sqlx::Error> {

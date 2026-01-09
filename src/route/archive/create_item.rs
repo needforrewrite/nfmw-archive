@@ -1,10 +1,10 @@
-use std::os::linux::raw;
+use std::{collections::HashSet, os::linux::raw};
 
 use axum::{Json, extract::{Multipart, State}, http::{HeaderMap, StatusCode}};
 use serde_json::json;
 use sqlx::types::{Uuid, uuid::Version};
 
-use crate::{archive::{ArchiveItemType, parse::parse_file}, db::{archive_item::ArchiveItem, token::UserToken}, state::ThreadSafeState};
+use crate::{archive::{ArchiveItemType, parse::parse_file}, db::{archive_item::ArchiveItem, archive_item_tag::ArchiveItemTag, archive_tag::ArchiveTag, archive_tag_ownership::user_can_assign_tag, token::UserToken}, state::ThreadSafeState};
 
 pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: HeaderMap, mut multipart: Multipart) -> axum::response::Result<(StatusCode, Json<serde_json::Value>)> {
     let auth = headers.get("authorization").ok_or((StatusCode::UNAUTHORIZED, Json(json!({"status": "no authorization token provided"}))))?;
@@ -87,10 +87,17 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
         return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "item must have data"}))))
     }
 
-    let parsed = parse_file(data.clone(), r#type == ArchiveItemType::Stage)
+    let mut parsed = parse_file(data.clone(), r#type == ArchiveItemType::Stage)
         .map_err(|e| (StatusCode::BAD_REQUEST, Json(
             json!({"status": format!("error parsing file: {e}")})
         )))?;
+
+    // deduplicate tags
+    parsed.tags = parsed.tags.into_iter().collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
+
+    if parsed.tags.len() > 5 {
+        return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "each item is limited to a maximum of 5 tags"}))))
+    }
 
     let id = id.unwrap();
     if id.is_nil() {
@@ -121,8 +128,26 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
     };
     item.insert(&lock.db_pool).await.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "internal database error on item save"}))))?;
 
-    // TODO: process item tags - figure out if this user can insert all the tags
-    // (and check if all the provided tags even exist)
+    for tag in parsed.tags {
+        let id = ArchiveTag::get_id_from_name(&lock.db_pool, tag.clone()).await
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "internal database error on tag lookup"}))))?
+            .ok_or((StatusCode::BAD_REQUEST, Json(json!({"status": format!("provided tag {tag} does not exist")}))))?;
+
+        let user_can_assign = user_can_assign_tag(&lock.db_pool, id, authenticated_user.user_id).await
+            .map_err(|e| (StatusCode::BAD_REQUEST, Json(json!({"status": format!("{e}")}))))?;
+
+        if !user_can_assign {
+            return Ok((StatusCode::FORBIDDEN, Json(json!({"status": "you don't have permission to assign this tag"}))));
+        }
+
+        let relation = ArchiveItemTag {
+            archive_item_id: item.archive_item_id,
+            tag_id: id
+        };
+
+        relation.insert(&lock.db_pool).await
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "internal database error on tag relation insertion"}))))?;
+    }
 
     Ok((StatusCode::OK, Json(serde_json::json!({"status": "item created"}))))
 }
