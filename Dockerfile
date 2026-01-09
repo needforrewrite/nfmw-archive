@@ -33,7 +33,7 @@ ENV RUSTUP_HOME=/root/.rustup \
 	CARGO_HOME=/root/.cargo \
 	PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${DOTNET_INSTALL_DIR}
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
- && rustup default stable
+ && rustup default nightly
 
 # Create app directory and copy sources
 WORKDIR /workspace
