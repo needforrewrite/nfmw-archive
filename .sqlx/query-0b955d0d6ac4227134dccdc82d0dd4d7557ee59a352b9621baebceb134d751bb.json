@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM archive_item_tags\n            WHERE archive_item_id = $1 AND tag_id = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0b955d0d6ac4227134dccdc82d0dd4d7557ee59a352b9621baebceb134d751bb"
+}

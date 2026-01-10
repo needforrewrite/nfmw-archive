@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO archive_item_tags (archive_item_id, tag_id)\n            VALUES ($1, $2)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3bf4f9c4cae6ca9e9e7f4bbd6663494714821b066dcfd116f0754cf9e9f3e7e7"
+}

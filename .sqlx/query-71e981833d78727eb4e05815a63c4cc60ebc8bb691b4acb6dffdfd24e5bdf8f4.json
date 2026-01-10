@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO archive_tags(tag_name)\n            VALUES ($1)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "71e981833d78727eb4e05815a63c4cc60ebc8bb691b4acb6dffdfd24e5bdf8f4"
+}

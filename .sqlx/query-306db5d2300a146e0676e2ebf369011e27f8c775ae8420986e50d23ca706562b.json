@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, username, phash, psalt, must_change_password\n            FROM users\n            WHERE username = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "username",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "phash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "psalt",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 4,
+        "name": "must_change_password",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "306db5d2300a146e0676e2ebf369011e27f8c775ae8420986e50d23ca706562b"
+}

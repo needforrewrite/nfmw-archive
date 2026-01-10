@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO users (username, phash, psalt, must_change_password)\n            VALUES ($1, $2, $3, $4)\n            ON CONFLICT (username) DO UPDATE\n            SET username = EXCLUDED.username,\n                phash = EXCLUDED.phash,\n                psalt = EXCLUDED.psalt,\n                must_change_password = EXCLUDED.must_change_password\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Bytea",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d8c02626720b3bb65cb6d742b91008f63d30f29667a0ac2be702200afad53358"
+}
