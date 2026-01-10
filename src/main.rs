@@ -1,3 +1,4 @@
+use std::env;
 use std::sync::Arc;
 
 use axum::Router;
@@ -24,15 +25,16 @@ async fn main() {
     let config = load_config();
     println!("Filestore path: {}", config.filestore);
 
+    let db_url = env::var("DATABASE_URL").unwrap();
+
     let pool = PgPoolOptions::new()
         .max_connections(1)
-        .connect(config.database.connection_string().as_str())
+        .connect(&db_url)
         .await
         .expect("Failed to create Postgres connection pool");
 
     println!(
-        "Connected to database on {}:{}",
-        config.database.host, config.database.port
+        "Connected to database on {db_url}"
     );
 
     // TODO: for now, fully regenerate archive db on restart,
