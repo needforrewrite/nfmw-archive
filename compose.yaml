@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/archive.Dockerfile
+    container_name: nfmw_archive
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/appdb
+    ports:
+      - "8074:8074"
+    volumes:
+      - nfmw_archive:/archive
+    command: cargo run --release
+
+  db:
+    image: postgres:18
+    container_name: nfmw_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - nfmw_pgdata:/var/lib/postgresql/data
+
+volumes:
+  nfmw_pgdata:
+  nfmw_archive:

@@ -36,8 +36,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --de
  && rustup default nightly
 
 # Create app directory and copy sources
-WORKDIR /workspace
-COPY . /workspace
+WORKDIR /app
+COPY . /app
 
 # Build the project (build.rs may invoke the dotnet generator)
 RUN cargo build --release
@@ -55,7 +55,7 @@ RUN pacman -Sy --noconfirm --needed \
  && pacman -Scc --noconfirm
 
 # Copy built binary and any required data
-COPY --from=builder /workspace/target/release/nfmw-archive /usr/local/bin/nfmw-archive
+COPY --from=builder /app/target/release/nfmw-archive /usr/local/bin/nfmw-archive
 
 EXPOSE 8074
 
