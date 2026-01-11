@@ -2,6 +2,8 @@ FROM archlinux:latest AS builder
 
 SHELL ["/bin/bash", "-c"]
 
+ARG DATABASE_URL
+
 # Keep package lists minimal and install build deps
 RUN pacman -Sy --noconfirm --needed \
 	archlinux-keyring \
@@ -35,17 +37,12 @@ ENV RUSTUP_HOME=/root/.rustup \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
  && rustup default nightly
 
-RUN cargo install sqlx-cli
-
 # Create app directory and copy sources
 WORKDIR /app
 COPY . /app
 
 # Build the project (build.rs may invoke the dotnet generator)
 RUN cargo build --release
-
-# Apply migrations
-RUN cargo sqlx migrate run
 
 FROM archlinux:latest AS runtime
 SHELL ["/bin/bash", "-c"]
@@ -59,6 +56,17 @@ RUN pacman -Sy --noconfirm --needed \
 	libunwind \
  && pacman -Scc --noconfirm
  
+# Install Rust toolchain via rustup
+ENV RUSTUP_HOME=/root/.rustup \
+	CARGO_HOME=/root/.cargo \
+	PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${DOTNET_INSTALL_DIR}
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
+ && rustup default nightly
+
+RUN cargo install sqlx-cli
+
+COPY --from=builder /app/migrations /db-migrations
+
 # Copy built binary and any required data
 COPY --from=builder /app/target/release/nfmw-archive /usr/local/bin/nfmw-archive
 
