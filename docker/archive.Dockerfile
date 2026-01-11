@@ -41,11 +41,11 @@ RUN cargo install sqlx-cli
 WORKDIR /app
 COPY . /app
 
-# Apply migrations
-RUN cargo sqlx migrate run
-
 # Build the project (build.rs may invoke the dotnet generator)
 RUN cargo build --release
+
+# Apply migrations
+RUN cargo sqlx migrate run
 
 FROM archlinux:latest AS runtime
 SHELL ["/bin/bash", "-c"]

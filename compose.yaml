@@ -6,8 +6,10 @@ services:
     container_name: nfmw_archive
     depends_on:
       - db
+    args:
+      DATABASE_URL: "postgresql://postgres:postgres@nfmw_postgres:5432/appdb"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@nfmw_postgres:5432/appdb
+      DATABASE_URL: "postgresql://postgres:postgres@nfmw_postgres:5432/appdb"
     ports:
       - "8074:8074"
     volumes:
@@ -19,9 +21,9 @@ services:
     container_name: nfmw_postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: appdb
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "appdb"
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
