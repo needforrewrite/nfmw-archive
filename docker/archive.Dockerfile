@@ -2,8 +2,6 @@ FROM archlinux:latest AS builder
 
 SHELL ["/bin/bash", "-c"]
 
-ARG DATABASE_URL
-
 # Keep package lists minimal and install build deps
 RUN pacman -Sy --noconfirm --needed \
 	archlinux-keyring \

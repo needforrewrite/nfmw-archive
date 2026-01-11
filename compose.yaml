@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: docker/archive.Dockerfile
-      args:
-        DATABASE_URL: "postgresql://postgres:postgres@nfmw_postgres:5432/appdb"
     container_name: nfmw_archive
     depends_on:
       - db
