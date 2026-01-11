@@ -7,7 +7,7 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgresql://postgres@127.0.0.1:5432/appdb
+      DATABASE_URL: postgresql://postgres:postgres@nfmw_postgres:5432/appdb
     ports:
       - "8074:8074"
     volumes:
@@ -25,7 +25,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - nfmw_pgdata:/var/lib/postgresql/data
+      - nfmw_pgdata:/var/lib/postgresql
 
 volumes:
   nfmw_pgdata:

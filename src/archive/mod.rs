@@ -1,3 +1,5 @@
+use std::io;
+
 pub mod index;
 pub mod parse;
 
@@ -28,4 +30,30 @@ impl ToString for ArchiveItemType {
             ArchiveItemType::Wheel => "wheel".to_owned()
         }
     }
+}
+impl ArchiveItemType {
+    pub fn dir_name(&self) -> String {
+        format!("{}s", self.to_string())
+    }
+}
+
+pub fn ensure_default_dirs_exist(path: &str) -> io::Result<()>
+{
+    const types: [ArchiveItemType; 4] = [
+        ArchiveItemType::Car,
+        ArchiveItemType::Stage,
+        ArchiveItemType::StagePiece,
+        ArchiveItemType::Wheel
+    ];
+
+    for t in types {
+        let name = t.dir_name();
+        let fullpath = format!("{path}/{name}");
+
+        if !std::fs::exists(&fullpath)? {
+            std::fs::create_dir(&fullpath)?;
+        }
+    }
+
+    Ok(())
 }

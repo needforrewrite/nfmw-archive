@@ -1,4 +1,4 @@
-use std::env;
+use std::env::{self, VarError};
 use std::sync::Arc;
 
 use axum::Router;
@@ -6,6 +6,7 @@ use axum::routing::{get, patch, post};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use tokio::sync::Mutex;
 
+use crate::archive::ensure_default_dirs_exist;
 use crate::archive::index::index_archive;
 use crate::archive::parse::parse_line;
 use crate::config::load_config;
@@ -25,7 +26,11 @@ async fn main() {
     let config = load_config();
     println!("Filestore path: {}", config.filestore);
 
-    let db_url = env::var("DATABASE_URL").unwrap();
+    let _ = dotenvy::dotenv();
+
+    let db_url = env::var("DATABASE_URL").or_else(|_| {
+        env::var("DATABASE_URL")
+    }).unwrap();
 
     let pool = PgPoolOptions::new()
         .max_connections(1)
@@ -46,6 +51,7 @@ async fn main() {
         config: load_config()
     }));
 
+    ensure_default_dirs_exist(&state.lock().await.config.filestore).unwrap();
 
     let c = state.clone();
     let idx = tokio::spawn(async {

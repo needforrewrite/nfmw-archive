@@ -924,6 +924,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "base64",
+ "dotenvy",
  "hex",
  "libc",
  "rand_core 0.9.3",

@@ -16,14 +16,11 @@ In order to facilitate searching, some information is aggregated from the files 
 
 Authors are anyone who is credited in the author() tag in the item. When a new author is found, they are added to an author index table linking their name to an author ID, which is then used in the other indexing tables linking that author ID to item IDs.
 
-There is one table which is not an index, and that is the table tracking who uploaded each item. This is a table linking a user ID (separate from author ID) to an item ID, and again has one table for each type of item. This table controls how items are edited and deleted by making sure only the uploader (or server admins) can do so.
 
 
 ### Filesystem
 
-The filesystem divides the items by their type. For example, all cars live in cars/. Within cars/, cars are organised by their collection. By default, all uploaded items go into the WorldUser collection. Only admins can move items to other collections. 
-
-Collections may be added or removed over time, and there is no static list of available collections at any one time, but the available collections must be synced between NFMW and the archive server - the archive server will accept anything as a collection, but the game is quite rigid on its collection definitions and will not be able to query anything in collections it does not recognise.
+The filesystem divides the items by their type. For example, cars live in cars/. Within each subdirectory is a flat list of every single item of that type. Items are organised based on tags which live in the file itself. The indexing process involves processing these tags into relations to aid searching.
 
 ### Account Management
 
