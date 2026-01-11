@@ -104,7 +104,7 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
         return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "invalid id"}))));
     }
 
-    let path = format!("{}/{}/{}.txt", lock.config.filestore, r#type.to_string(), id.hyphenated().to_string());
+    let path = format!("{}/{}/{}.txt", lock.config.filestore, r#type.dir_name(), id.hyphenated().to_string());
 
     let ex = std::fs::exists(&path);
     if let Ok(e) = ex && e == false {
@@ -149,5 +149,5 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
             .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "internal database error on tag relation insertion"}))))?;
     }
 
-    Ok((StatusCode::OK, Json(serde_json::json!({"status": "item created"}))))
+    Ok((StatusCode::OK, Json(serde_json::json!({"status": format!("item created with id {}", id.hyphenated().to_string())}))))
 }

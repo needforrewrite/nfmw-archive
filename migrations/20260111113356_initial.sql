@@ -1,8 +1,7 @@
+-- Add migration script here
 --
 -- PostgreSQL database dump
 --
-
-\restrict PW17xzJyqf9QqnB9Mwflpk6jLUCafC8XjLpfGw6VcXODMFevuuGxYrMJtCH1lhk
 
 -- Dumped from database version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
 -- Dumped by pg_dump version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
@@ -12,7 +11,6 @@ SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
@@ -247,5 +245,3 @@ ALTER TABLE ONLY public.archive_tags_ownership
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict PW17xzJyqf9QqnB9Mwflpk6jLUCafC8XjLpfGw6VcXODMFevuuGxYrMJtCH1lhk

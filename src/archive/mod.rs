@@ -36,17 +36,30 @@ impl ArchiveItemType {
         format!("{}s", self.to_string())
     }
 }
+impl TryFrom<&str> for ArchiveItemType {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "car" => Ok(ArchiveItemType::Car),
+            "stage" => Ok(ArchiveItemType::Stage),
+            "stage_piece" => Ok(ArchiveItemType::StagePiece),
+            "wheel" => Ok(ArchiveItemType::Wheel),
+            _ => Err(())
+        }
+    }
+}
 
 pub fn ensure_default_dirs_exist(path: &str) -> io::Result<()>
 {
-    const types: [ArchiveItemType; 4] = [
+    const TYPES: [ArchiveItemType; 4] = [
         ArchiveItemType::Car,
         ArchiveItemType::Stage,
         ArchiveItemType::StagePiece,
         ArchiveItemType::Wheel
     ];
 
-    for t in types {
+    for t in TYPES {
         let name = t.dir_name();
         let fullpath = format!("{path}/{name}");
 

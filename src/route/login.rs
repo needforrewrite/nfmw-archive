@@ -27,13 +27,12 @@ pub async fn login(State(state): State<ThreadSafeState>, Json(payload): Json<Log
 
     // Generate a new token
     let token = generate_base64_authentication_token();
-    let user_token = UserToken::new(user.id, token.clone());
 
     // Remove any existing tokens for this user
     UserToken::remove_all(user.id, pool).await.unwrap();
 
     // Insert the new token
-    user_token.insert(pool).await.unwrap();
+    UserToken::insert(pool, user.id, &token).await.unwrap();
 
     (StatusCode::OK, Json(serde_json::json!({"status": "login successful", "token": token})))
 }
