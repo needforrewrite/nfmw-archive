@@ -52,6 +52,7 @@ RUN pacman -Sy --noconfirm --needed \
 	zlib \
 	icu \
 	libunwind \
+	base-devel \
  && pacman -Scc --noconfirm
  
 # Install Rust toolchain via rustup
