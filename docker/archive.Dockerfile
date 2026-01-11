@@ -64,7 +64,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --de
 
 RUN cargo install sqlx-cli
 
-COPY --from=builder /app/migrations /db-migrations
+RUN mkdir /migrations
+COPY --from=builder /app/migrations /migrations
 
 # Copy built binary and any required data
 COPY --from=builder /app/target/release/nfmw-archive /usr/local/bin/nfmw-archive
