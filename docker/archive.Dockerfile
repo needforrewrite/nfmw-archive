@@ -35,9 +35,14 @@ ENV RUSTUP_HOME=/root/.rustup \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
  && rustup default nightly
 
+RUN cargo install sqlx-cli
+
 # Create app directory and copy sources
 WORKDIR /app
 COPY . /app
+
+# Apply migrations
+RUN cargo sqlx migrate run
 
 # Build the project (build.rs may invoke the dotnet generator)
 RUN cargo build --release
@@ -52,17 +57,7 @@ RUN pacman -Sy --noconfirm --needed \
 	zlib \
 	icu \
 	libunwind \
-	base-devel \
  && pacman -Scc --noconfirm
-
-# We need Rust for cargo sqlx for migrations
-ENV RUSTUP_HOME=/root/.rustup \
-	CARGO_HOME=/root/.cargo \
-	PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${DOTNET_INSTALL_DIR}
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
- && rustup default nightly
-
-RUN cargo install sqlx-cli
  
 # Copy built binary and any required data
 COPY --from=builder /app/target/release/nfmw-archive /usr/local/bin/nfmw-archive
