@@ -98,7 +98,7 @@ impl User {
     pub async fn get_by_username_password(pool: &sqlx::PgPool, username: &str, password: &str) -> Result<Option<User>, sqlx::Error> {
         if let Some(user) = User::get_by_username(pool, username).await? {
             let computed_hash = crate::crypto::hash_password(password, &user.psalt);
-            if computed_hash.as_bytes().ct_eq(user.phash.as_bytes()).unwrap_u8() == 1 {
+            if computed_hash.as_bytes().ct_eq(user.phash.as_bytes()).into() {
                 return Ok(Some(user));
             }
         }
