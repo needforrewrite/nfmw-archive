@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use sqlx::types::time::{PrimitiveDateTime};
 use subtle::ConstantTimeEq;
 
 #[derive(sqlx::FromRow, Debug)]
@@ -9,6 +10,7 @@ pub struct User {
     /// These can be null if using an oauth account.
     pub phash: Option<String>,
     pub psalt: Option<Vec<u8>>,
+    pub created_at: Option<PrimitiveDateTime>,
     /// Indicates whether the user must change their password on next login
     pub must_change_password: Option<bool>,
 }
@@ -23,6 +25,8 @@ impl User {
             phash: Some(phash),
             psalt: Some(psalt),
             must_change_password,
+            /// Set on insert
+            created_at: None
         }
     }
 
@@ -88,9 +92,9 @@ impl User {
     /// 
     /// We don't mark this as `pub` because we want to enforce password checking via `get_by_username_password`
     async fn get_by_username(pool: &sqlx::PgPool, username: &str) -> Result<Option<User>, sqlx::Error> {
-        let user = sqlx::query_as!(Self, 
+        let user = sqlx::query_as!(User, 
             r#"
-            SELECT id, username, phash, psalt, must_change_password
+            SELECT id, username, phash, psalt, created_at, must_change_password
             FROM users
             WHERE username = $1
             "#,
