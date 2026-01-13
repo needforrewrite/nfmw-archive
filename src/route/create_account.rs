@@ -10,7 +10,7 @@ pub struct CreateAccountPayload {
 
 pub async fn create_account(State(state): State<ThreadSafeState>, Json(payload): Json<CreateAccountPayload>) -> (StatusCode, Json<serde_json::Value>) {
     let password = payload.password.clone();
-    let user = User::new_from_password(payload.username, payload.password, Some(false));
+    let user = User::new_local_from_password(payload.username, payload.password, Some(false));
 
     let pool = &state.lock().await.db_pool;
 

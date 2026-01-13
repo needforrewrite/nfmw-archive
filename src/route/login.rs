@@ -11,7 +11,7 @@ pub struct LoginPayload {
 pub async fn login(State(state): State<ThreadSafeState>, Json(payload): Json<LoginPayload>) -> (StatusCode, Json<serde_json::Value>) {
     let pool = &state.lock().await.db_pool;
 
-    let user = User::get_by_username_password(pool, &payload.username, &payload.password).await;
+    let user = User::get_by_username_and_local_password(pool, &payload.username, &payload.password).await;
 
     if let Err(e) = user {
         eprintln!("Database error on username lookup: {}", e);

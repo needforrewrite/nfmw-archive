@@ -6,21 +6,22 @@ pub struct User {
     /// ID sequentially assigned by DB
     pub id: i32,
     pub username: String,
-    pub phash: String,
-    pub psalt: Vec<u8>,
+    /// These can be null if using an oauth account.
+    pub phash: Option<String>,
+    pub psalt: Option<Vec<u8>>,
     /// Indicates whether the user must change their password on next login
     pub must_change_password: Option<bool>,
 }
 impl User {
-    pub fn new_from_password(username: String, password: String, must_change_password: Option<bool>) -> Self {
+    pub fn new_local_from_password(username: String, password: String, must_change_password: Option<bool>) -> Self {
         let psalt = crate::crypto::generate_salt().to_vec();
         let phash = crate::crypto::hash_password(&password, &psalt);
         User {
             // ID assigned by DB on insert
             id: 0,
             username,
-            phash,
-            psalt,
+            phash: Some(phash),
+            psalt: Some(psalt),
             must_change_password,
         }
     }
@@ -36,12 +37,17 @@ impl User {
             && password.chars().all(|c| c.is_ascii())
     }
 
-    pub fn update_password(&mut self, new_password: String, must_change_password: bool) {
-        let psalt = crate::crypto::generate_salt().to_vec();
-        let phash = crate::crypto::hash_password(&new_password, &psalt);
-        self.phash = phash;
-        self.psalt = psalt;
-        self.must_change_password = Some(must_change_password);
+    /// Only does anything if this is a local account. Returns None if the account is not local.
+    pub fn update_local_password(&mut self, new_password: String, must_change_password: bool) -> Option<()> {
+        if self.phash.is_some() && self.psalt.is_some() {
+            let psalt = crate::crypto::generate_salt().to_vec();
+            let phash = crate::crypto::hash_password(&new_password, &psalt);
+            self.phash = Some(phash);
+            self.psalt = Some(psalt);
+            self.must_change_password = Some(must_change_password);
+            return Some(())
+        }
+        None
     }
 
     pub async fn check_username_exists(&self, pool: &sqlx::PgPool) -> Result<bool, sqlx::Error> {
@@ -95,11 +101,16 @@ impl User {
         Ok(user)
     }
 
-    pub async fn get_by_username_password(pool: &sqlx::PgPool, username: &str, password: &str) -> Result<Option<User>, sqlx::Error> {
+    pub async fn get_by_username_and_local_password(pool: &sqlx::PgPool, username: &str, password: &str) -> Result<Option<User>, sqlx::Error> {
         if let Some(user) = User::get_by_username(pool, username).await? {
-            let computed_hash = crate::crypto::hash_password(password, &user.psalt);
-            if computed_hash.as_bytes().ct_eq(user.phash.as_bytes()).into() {
-                return Ok(Some(user));
+            if let Some(ref hash) = user.phash.clone() && let Some(ref salt) = user.psalt {
+                let computed_hash = crate::crypto::hash_password(password, salt);
+                if computed_hash.as_bytes().ct_eq(hash.as_bytes()).into() {
+                    return Ok(Some(user));
+                }
+            } else {
+                // Likely Oauth2 account
+                return Ok(None)
             }
         }
         Ok(None)
