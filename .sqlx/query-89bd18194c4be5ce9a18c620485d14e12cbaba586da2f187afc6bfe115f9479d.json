@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT id, username, phash, psalt, must_change_password\n            FROM users\n            WHERE username = $1\n            ",
+  "query": "\n            SELECT id, username, phash, psalt, created_at, must_change_password\n            FROM users\n            WHERE username = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -25,6 +25,11 @@
       },
       {
         "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
         "name": "must_change_password",
         "type_info": "Bool"
       }
@@ -37,10 +42,11 @@
     "nullable": [
       false,
       false,
-      false,
-      false,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "306db5d2300a146e0676e2ebf369011e27f8c775ae8420986e50d23ca706562b"
+  "hash": "89bd18194c4be5ce9a18c620485d14e12cbaba586da2f187afc6bfe115f9479d"
 }
