@@ -8,7 +8,8 @@ use crate::config::Config;
 pub struct State {
     pub db_pool: sqlx::PgPool,
     pub index_state: IndexState,
-    pub config: Config
+    pub config: Config,
+    pub req_client: reqwest::Client
 }
 
 #[derive(Clone)]

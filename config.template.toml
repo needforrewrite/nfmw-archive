@@ -1,3 +1,6 @@
 port = 8081
 filestore = "/var/www"
-discord_app_client_secret=0
+
+[discord]
+client_id = 0
+client_secret = ""

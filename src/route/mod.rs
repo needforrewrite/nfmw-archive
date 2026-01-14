@@ -5,8 +5,8 @@ use serde_json::Value;
 use crate::state::ThreadSafeState;
 
 pub mod archive;
-pub mod create_account;
-pub mod login;
+pub mod local_create_account;
+pub mod local_login;
 pub mod oauth;
 
 pub async fn root(State(_): State<ThreadSafeState>) -> Json<Value> {

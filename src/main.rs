@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum::routing::{get, patch, post};
+use reqwest::Client;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use tokio::sync::Mutex;
 
@@ -48,7 +49,8 @@ async fn main() {
     let state = Arc::new(Mutex::new(state::State {
         db_pool: pool,
         index_state: state::IndexState::Regenerating,
-        config: load_config()
+        config: load_config(),
+        req_client: Client::new()
     }));
 
     ensure_default_dirs_exist(&state.lock().await.config.filestore).unwrap();
@@ -68,9 +70,9 @@ async fn main() {
         .route("/", get(route::root))
         .route(
             "/create_account",
-            post(route::create_account::create_account),
+            post(route::local_create_account::create_account),
         )
-        .route("/login", post(route::login::login))
+        .route("/login", post(route::local_login::login))
         .route("/archive", patch(route::archive::create_item::create_archive_item))
         .with_state(state);
 

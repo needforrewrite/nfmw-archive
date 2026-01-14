@@ -1,10 +1,10 @@
-use std::{collections::HashSet, os::linux::raw};
+use std::{collections::HashSet};
 
 use axum::{Json, extract::{Multipart, State}, http::{HeaderMap, StatusCode}};
 use serde_json::json;
 use sqlx::types::{Uuid, uuid::Version};
 
-use crate::{archive::{ArchiveItemType, parse::parse_file}, db::{archive_item::ArchiveItem, archive_item_tag::ArchiveItemTag, archive_tag::ArchiveTag, archive_tag_ownership::user_can_assign_tag, token::UserToken}, state::ThreadSafeState};
+use crate::{archive::{ArchiveItemType, parse::parse_file}, db::{archive::{archive_item::ArchiveItem, archive_item_tag::ArchiveItemTag, archive_tag::ArchiveTag, archive_tag_ownership::user_can_assign_tag}, token::UserToken}, state::ThreadSafeState};
 
 pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: HeaderMap, mut multipart: Multipart) -> axum::response::Result<(StatusCode, Json<serde_json::Value>)> {
     let auth = headers.get("authorization").ok_or((StatusCode::UNAUTHORIZED, Json(json!({"status": "no authorization token provided"}))))?;
