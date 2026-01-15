@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT * from archive_tags\n            WHERE tag_name = $1\n            ",
+  "query": "\n            SELECT * from archive_tags\n            WHERE tag_name = $1\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -24,5 +24,5 @@
       false
     ]
   },
-  "hash": "1f776390b6760f0a9a6c27d0d273b4ced2b47a0b87210f4194f66d5165b7686a"
+  "hash": "f35a7dc001a3dab9f47fe7227dd98df272e3b9f5df1aca9784fea90ce7b6c4a0"
 }

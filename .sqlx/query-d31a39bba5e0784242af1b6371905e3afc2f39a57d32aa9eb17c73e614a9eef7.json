@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT id, username, phash, psalt, created_at, must_change_password\n            FROM users\n            WHERE username = $1\n            ",
+  "query": "\n            SELECT id, username, phash, psalt, created_at, must_change_password\n            FROM users\n            WHERE username = $1\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -48,5 +48,5 @@
       true
     ]
   },
-  "hash": "89bd18194c4be5ce9a18c620485d14e12cbaba586da2f187afc6bfe115f9479d"
+  "hash": "d31a39bba5e0784242af1b6371905e3afc2f39a57d32aa9eb17c73e614a9eef7"
 }
