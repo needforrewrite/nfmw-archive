@@ -97,6 +97,7 @@ impl User {
             SELECT id, username, phash, psalt, created_at, must_change_password
             FROM users
             WHERE username = $1
+            LIMIT 1
             "#,
             username
         )

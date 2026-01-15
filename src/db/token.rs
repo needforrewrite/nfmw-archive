@@ -27,6 +27,7 @@ impl UserToken {
         let entry = sqlx::query_as!(Self, r#"
             SELECT * FROM user_tokens
             WHERE token = $1
+            LIMIT 1
             "#,
             token
         )

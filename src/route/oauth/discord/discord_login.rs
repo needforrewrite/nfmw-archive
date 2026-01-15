@@ -3,7 +3,9 @@ use reqwest::{Method, RequestBuilder};
 use serde_json::json;
 
 use crate::{
-    route::oauth::discord::discord_token_exchange::{exchange_code_for_token, get_user_id_from_token}, state::ThreadSafeState,
+    crypto::generate_base64_authentication_token, db::{discord_oauth2::DiscordOauth2AccountEntry, token::UserToken}, route::oauth::discord::discord_token_exchange::{
+        exchange_code_for_token, get_user_id_from_token,
+    }, state::ThreadSafeState
 };
 
 #[derive(serde::Deserialize)]
@@ -39,8 +41,45 @@ pub async fn login(
 
     let id = get_user_id_from_token(&token).await?;
 
+    let pool = &state.lock().await.db_pool;
+
     // TODO: lookup id in Oauth2 table, if it exists issue token. If not, reject with 404 and
     // ask user to create an account.
+    let lookup =
+        DiscordOauth2AccountEntry::lookup_discord_user_id(pool, id as i64)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"status": format!("Failed to lookup oauth2 entry: {e}")})),
+                )
+            })?;
 
-    todo!()
+    if let Some(l) = lookup {
+        // Generate a new token
+        let token = generate_base64_authentication_token();
+        // Remove any existing tokens for this user
+        UserToken::remove_all(l.user_id, pool).await
+            .map_err(|_| (
+                StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "database error on token invalidation"}))
+            ))?;
+        // Insert the new token
+        UserToken::insert(pool, l.user_id, &token).await
+            .map_err(|_| (
+                StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "database error on token register"}))
+            ))?;
+
+        
+        Ok((
+            StatusCode::OK,
+            Json(serde_json::json!({"status": "login successful", "token": token})),
+        ))
+    } else {
+        Ok((
+            StatusCode::NOT_FOUND,
+            Json(
+                json!({"status": "No user exists for this discord account, please use the discord_create_account endpoint first"}),
+            ),
+        ))
+    }
 }

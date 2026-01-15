@@ -13,6 +13,7 @@ use crate::archive::parse::parse_line;
 use crate::config::load_config;
 use crate::db::user::User;
 use crate::ffi::{SimulateTimeTrialArgs, nfmw_simulate_tt};
+use crate::route::oauth::discord;
 
 mod archive;
 mod config;
@@ -74,6 +75,7 @@ async fn main() {
         )
         .route("/login", post(route::local_login::login))
         .route("/archive", patch(route::archive::create_item::create_archive_item))
+        .route("/discord/login", post(discord::discord_login::login))
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);

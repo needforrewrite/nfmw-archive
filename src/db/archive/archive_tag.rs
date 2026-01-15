@@ -24,6 +24,7 @@ impl ArchiveTag {
         let out = sqlx::query_as!(ArchiveTag, r#"
             SELECT * from archive_tags
             WHERE tag_name = $1
+            LIMIT 1
             "#,
             &name
         )
