@@ -3,11 +3,9 @@ use reqwest::StatusCode;
 use serde_json::json;
 
 use crate::{
-    db::{discord_oauth2::DiscordOauth2AccountEntry, user::User},
-    route::oauth::discord::discord_token_exchange::{
+    crypto::generate_base64_authentication_token, db::{discord_oauth2::DiscordOauth2AccountEntry, token::UserToken, user::User}, route::oauth::discord::discord_token_exchange::{
         exchange_code_for_token, get_user_id_from_token,
-    },
-    state::ThreadSafeState,
+    }, state::ThreadSafeState
 };
 
 pub struct DiscordCreateAccountPayload {
@@ -64,7 +62,7 @@ pub async fn create_account(
         ));
     }
 
-    let id = User::create_oauth(pool, &payload.username)
+    let user_id = User::create_oauth(pool, &payload.username)
         .await
         .map_err(|e| {
             (
@@ -73,7 +71,7 @@ pub async fn create_account(
             )
         })?;
 
-    DiscordOauth2AccountEntry::create_oauth2_link(pool, id, discord_id)
+    DiscordOauth2AccountEntry::create_oauth2_link(pool, user_id, discord_id)
         .await
         .map_err(|e| {
             (
@@ -82,5 +80,16 @@ pub async fn create_account(
             )
         })?;
 
-    Ok((StatusCode::OK, Json(json!({"status": "account created, use /discord/login to log in"}))))
+    // login on same call to prevent user from having to log into discord again
+    let token = generate_base64_authentication_token();
+    UserToken::insert(pool, user_id, &token)
+        .await
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"status": "database error on token register"})),
+            )
+        })?;
+
+    Ok((StatusCode::OK, Json(json!({"status": "account created", "token": token}))))
 }
