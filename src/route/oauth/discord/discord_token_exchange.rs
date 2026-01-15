@@ -65,6 +65,33 @@ pub async fn exchange_code_for_token(
 }
 
 
-pub async fn get_user_id_from_token(token: &str) -> Result<u32, (StatusCode, Json<serde_json::Value>)> {
-    todo!()
+#[derive(serde::Deserialize)]
+pub struct DiscordUserIdResponse {
+    id: i64
+}
+
+
+pub async fn get_user_id_from_token(client: &Client, token: &str) -> Result<i64, (StatusCode, Json<serde_json::Value>)> {
+    let url = "https://discord.com/api/v10/users/@me";
+    let user_agent = "NFMWAPI";
+
+    let res = client.request(Method::GET, url)
+        .bearer_auth(token)
+        .header("user-agent", user_agent)
+        .send()
+        .await
+        .map_err(|e|
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id: {e}")})))
+        )?
+        .error_for_status()
+        .map_err(|e|
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id: {e}")})))
+        )?
+        .json::<DiscordUserIdResponse>()
+        .await
+        .map_err(|e|
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id: {e}")})))
+        )?;
+
+    Ok(res.id)
 }

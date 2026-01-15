@@ -1,5 +1,4 @@
 use axum::{Json, extract::State, http::StatusCode};
-use reqwest::{Method, RequestBuilder};
 use serde_json::json;
 
 use crate::{
@@ -12,11 +11,6 @@ use crate::{
 pub struct DiscordLoginPayload {
     pub code: String,
     pub redirect_uri: String,
-}
-
-#[derive(serde::Deserialize)]
-pub struct DiscordUserResponse {
-    pub id: u32,
 }
 
 pub async fn login(
@@ -39,7 +33,7 @@ pub async fn login(
     )
     .await?;
 
-    let id = get_user_id_from_token(&token).await?;
+    let id = get_user_id_from_token(&state.lock().await.req_client, &token).await?;
 
     let pool = &state.lock().await.db_pool;
 
