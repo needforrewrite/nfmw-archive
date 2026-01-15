@@ -37,7 +37,7 @@ pub async fn login(
 
     let pool = &state.lock().await.db_pool;
 
-    // TODO: lookup id in Oauth2 table, if it exists issue token. If not, reject with 404 and
+    // lookup id in Oauth2 table, if it exists issue token. If not, reject with 404 and
     // ask user to create an account.
     let lookup =
         DiscordOauth2AccountEntry::lookup_discord_user_id(pool, id as i64)
@@ -72,7 +72,7 @@ pub async fn login(
         Ok((
             StatusCode::NOT_FOUND,
             Json(
-                json!({"status": "No user exists for this discord account, please use the discord_create_account endpoint first"}),
+                json!({"status": "No user exists for this discord account, please use the /discord/create_account endpoint first"}),
             ),
         ))
     }
