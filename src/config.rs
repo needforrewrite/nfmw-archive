@@ -9,7 +9,7 @@ pub struct Config {
 
 #[derive(Deserialize, Clone)]
 pub struct DiscordConfig {
-    pub client_id: u32,
+    pub client_id: i64,
     pub client_secret: String
 }
 

@@ -18,7 +18,7 @@ pub struct DiscordTokenExchangeResponse {
 
 pub async fn exchange_code_for_token(
     req_client: &Client,
-    client_id: u32,
+    client_id: i64,
     client_secret: &str,
     code: String,
     redirect_uri: String,
