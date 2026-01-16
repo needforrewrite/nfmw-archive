@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO discord_oauth2_token_storage (session_token, discord_token, discord_user_id)\n            VALUES ($1, $2, $3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cd4122d49bbb063211c8981d45366bbfe6cb96167424fc4b2a9278f116e8811e"
+}

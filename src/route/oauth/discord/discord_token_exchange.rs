@@ -67,7 +67,7 @@ pub async fn exchange_code_for_token(
 
 #[derive(serde::Deserialize)]
 pub struct DiscordUserIdResponse {
-    id: i64
+    id: String
 }
 
 
@@ -81,17 +81,18 @@ pub async fn get_user_id_from_token(client: &Client, token: &str) -> Result<i64,
         .send()
         .await
         .map_err(|e|
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id: {e}")})))
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id step 1: {e}")})))
         )?
         .error_for_status()
         .map_err(|e|
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id: {e}")})))
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id step 2: {e}")})))
         )?
         .json::<DiscordUserIdResponse>()
         .await
         .map_err(|e|
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id: {e}")})))
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to query discord user id step 3: {e}")})))
         )?;
 
-    Ok(res.id)
+    Ok(res.id.parse::<i64>()
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": format!("failed to parse discord id: {e}")}))))?)
 }

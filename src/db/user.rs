@@ -34,6 +34,18 @@ impl User {
         }
     }
 
+    pub async fn get_by_user_id(pool: &sqlx::PgPool, user_id: i32) -> Result<Option<Self>, sqlx::Error> {
+        let res = sqlx::query_as!(Self, 
+            r#"
+            SELECT * FROM users WHERE id = $1
+            "#,
+            user_id
+        ).fetch_optional(pool)
+        .await?;
+
+        Ok(res)
+    }
+
     /// Password must be at least 8 characters, one uppercase letter, one lowercase letter, one digit.
     /// Cannot contain spaces and must be ASCII.
     pub fn validate_password(password: &str) -> bool {
@@ -43,6 +55,20 @@ impl User {
             && password.chars().any(|c| c.is_digit(10))
             && !password.chars().any(|c| c.is_whitespace())
             && password.chars().all(|c| c.is_ascii())
+    }
+
+    pub fn validate_username(username: &str) -> Option<&'static str> {
+        if username.len() < 3 {
+            return Some("Username must be 3 characters or longer");
+        } else if username.len() > 21 {
+            return Some("Username must be 20 characters or less");
+        } else if username.chars().any(|c| !c.is_digit(10) && !c.is_ascii_alphabetic() && c != '_') {
+            return Some("Username cannot use special characters (except _)");
+        } else if username.chars().filter(|c| *c == '_').count() > 2 {
+            return Some("Username cannot contain more than two underscores");
+        } else {
+            return None;
+        }
     }
 
     /// Only does anything if this is a local account. Returns None if the account is not local.
