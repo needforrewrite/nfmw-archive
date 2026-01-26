@@ -14,5 +14,6 @@ pub struct DiscordConfig {
 }
 
 pub fn load_config() -> Config {
-    toml::from_str::<Config>(include_str!("../config.toml")).unwrap()
+    let file = std::fs::read_to_string("config.toml").unwrap();
+    toml::from_str::<Config>(&file).unwrap()
 }
