@@ -10,7 +10,7 @@ use crate::{
         token::UserToken,
         user::User,
     },
-    route::oauth::discord::discord_token_exchange::{
+    route::oauth2::discord::discord_token_exchange::{
         exchange_code_for_token, get_user_id_from_token,
     },
     state::ThreadSafeState,

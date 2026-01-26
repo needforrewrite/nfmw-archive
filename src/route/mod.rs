@@ -7,7 +7,8 @@ use crate::state::ThreadSafeState;
 pub mod archive;
 pub mod local_create_account;
 pub mod local_login;
-pub mod oauth;
+pub mod oauth2;
+pub mod tt;
 
 pub async fn root(State(_): State<ThreadSafeState>) -> Json<Value> {
     Json(serde_json::json!({"status": "healthy"}))

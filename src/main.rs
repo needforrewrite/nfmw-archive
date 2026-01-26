@@ -13,7 +13,7 @@ use crate::archive::parse::parse_line;
 use crate::config::load_config;
 use crate::db::user::User;
 use crate::ffi::{SimulateTimeTrialArgs, nfmw_simulate_tt};
-use crate::route::oauth::discord;
+use crate::route::oauth2::discord;
 
 mod archive;
 mod config;
@@ -22,6 +22,7 @@ mod db;
 mod ffi;
 mod route;
 mod state;
+mod tt;
 
 #[tokio::main]
 async fn main() {

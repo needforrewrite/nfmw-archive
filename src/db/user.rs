@@ -29,7 +29,7 @@ impl User {
             phash: Some(phash),
             psalt: Some(psalt),
             must_change_password,
-            /// Set on insert
+            // Set on insert
             created_at: None,
         }
     }

@@ -1,14 +1,16 @@
--- Add migration script here
+-- Add up migration script here
+
 --
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
--- Dumped by pg_dump version 14.20 (Ubuntu 14.20-0ubuntu0.22.04.1)
+-- Dumped from database version 18.1
+-- Dumped by pg_dump version 18.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -86,7 +88,7 @@ CREATE SEQUENCE public.archive_tags_tag_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.archive_tags_tag_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.archive_tags_tag_id_seq OWNER TO postgres;
 
 --
 -- Name: archive_tags_tag_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -96,15 +98,101 @@ ALTER SEQUENCE public.archive_tags_tag_id_seq OWNED BY public.archive_tags.tag_i
 
 
 --
+-- Name: discord_oauth2; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.discord_oauth2 (
+    entry_id integer NOT NULL,
+    user_id integer NOT NULL,
+    discord_user_id bigint NOT NULL,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.discord_oauth2 OWNER TO postgres;
+
+--
+-- Name: discord_oauth2_entry_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.discord_oauth2_entry_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.discord_oauth2_entry_id_seq OWNER TO postgres;
+
+--
+-- Name: discord_oauth2_entry_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.discord_oauth2_entry_id_seq OWNED BY public.discord_oauth2.entry_id;
+
+
+--
+-- Name: discord_oauth2_token_storage; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.discord_oauth2_token_storage (
+    session_token text NOT NULL,
+    discord_token text NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    discord_user_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.discord_oauth2_token_storage OWNER TO postgres;
+
+--
+-- Name: user_tokens; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_tokens (
+    token_id integer NOT NULL,
+    user_id integer NOT NULL,
+    token text NOT NULL
+);
+
+
+ALTER TABLE public.user_tokens OWNER TO postgres;
+
+--
+-- Name: user_tokens_token_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.user_tokens_token_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.user_tokens_token_id_seq OWNER TO postgres;
+
+--
+-- Name: user_tokens_token_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.user_tokens_token_id_seq OWNED BY public.user_tokens.token_id;
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.users (
     id integer NOT NULL,
     username character varying(32) NOT NULL,
-    phash character varying NOT NULL,
-    psalt bytea NOT NULL,
-    must_change_password boolean
+    phash character varying,
+    psalt bytea,
+    must_change_password boolean,
+    created_at timestamp without time zone DEFAULT now()
 );
 
 
@@ -123,7 +211,7 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -137,6 +225,20 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 --
 
 ALTER TABLE ONLY public.archive_tags ALTER COLUMN tag_id SET DEFAULT nextval('public.archive_tags_tag_id_seq'::regclass);
+
+
+--
+-- Name: discord_oauth2 entry_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.discord_oauth2 ALTER COLUMN entry_id SET DEFAULT nextval('public.discord_oauth2_entry_id_seq'::regclass);
+
+
+--
+-- Name: user_tokens token_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_tokens ALTER COLUMN token_id SET DEFAULT nextval('public.user_tokens_token_id_seq'::regclass);
 
 
 --
@@ -184,6 +286,62 @@ ALTER TABLE ONLY public.archive_tags
 
 ALTER TABLE ONLY public.archive_tags
     ADD CONSTRAINT archive_tags_tag_name_key UNIQUE (tag_name);
+
+
+--
+-- Name: discord_oauth2 discord_oauth2_discord_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.discord_oauth2
+    ADD CONSTRAINT discord_oauth2_discord_user_id_key UNIQUE (discord_user_id);
+
+
+--
+-- Name: discord_oauth2 discord_oauth2_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.discord_oauth2
+    ADD CONSTRAINT discord_oauth2_pkey PRIMARY KEY (entry_id);
+
+
+--
+-- Name: discord_oauth2_token_storage discord_oauth2_token_storage_discord_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.discord_oauth2_token_storage
+    ADD CONSTRAINT discord_oauth2_token_storage_discord_user_id_key UNIQUE (discord_user_id);
+
+
+--
+-- Name: discord_oauth2_token_storage discord_oauth2_token_storage_session_token_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.discord_oauth2_token_storage
+    ADD CONSTRAINT discord_oauth2_token_storage_session_token_key UNIQUE (session_token);
+
+
+--
+-- Name: discord_oauth2 discord_oauth2_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.discord_oauth2
+    ADD CONSTRAINT discord_oauth2_user_id_key UNIQUE (user_id);
+
+
+--
+-- Name: user_tokens user_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_tokens
+    ADD CONSTRAINT user_tokens_pkey PRIMARY KEY (token_id);
+
+
+--
+-- Name: user_tokens user_tokens_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_tokens
+    ADD CONSTRAINT user_tokens_user_id_key UNIQUE (user_id);
 
 
 --
@@ -243,5 +401,22 @@ ALTER TABLE ONLY public.archive_tags_ownership
 
 
 --
+-- Name: discord_oauth2 discord_oauth2_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.discord_oauth2
+    ADD CONSTRAINT discord_oauth2_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_tokens user_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_tokens
+    ADD CONSTRAINT user_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
+
