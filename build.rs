@@ -15,7 +15,7 @@ fn main() {
     println!("cargo::rustc-link-search=native={path}");
     println!("cargo:rustc-env=LD_LIBRARY_PATH={path}");
 
-    Command::new("dotnet")
+    let publish = Command::new("dotnet")
         .args([
             "publish",
             &format!("{workspace}/nfm-world/NFMWorld.Library/NFMWorld.Library.csproj"),
@@ -28,12 +28,23 @@ fn main() {
             "-o",
             &format!("{workspace}/build"),
         ])
-        .output()
-        .unwrap()
-        .exit_ok()
-        .unwrap();
+        .output();
 
-    Command::new("dotnet")
+    if let Err(e) = publish {
+        panic!("Failed to publish NFMWorld.Library: {}", e);
+    }
+
+    let publish = publish.unwrap();
+
+    if let Err(e) = publish.clone().exit_ok() {
+        let stdout = String::from_utf8_lossy(&publish.stdout);
+        let stderr = String::from_utf8_lossy(&publish.stderr);
+        eprintln!("stdout: {}", stdout);
+        eprintln!("stderr: {}", stderr);
+        panic!("Failed to publish NFMWorld.Library: {}", e);
+    }
+
+    let bindgen = Command::new("dotnet")
         .args([
             "publish",
             &format!("{workspace}/nfm-world/NFMWorld.RustBindGen/NFMWorld.RustBindGen.csproj"),
@@ -46,10 +57,21 @@ fn main() {
             "-o",
             &format!("{workspace}/build"),
         ])
-        .output()
-        .unwrap()
-        .exit_ok()
-        .unwrap();
+        .output();
+
+    if let Err(e) = bindgen {
+        panic!("Failed to publish NFMWorld.RustBindGen: {}", e);
+    }
+
+    let bindgen = bindgen.unwrap();
+
+    if let Err(e) = bindgen.clone().exit_ok() {
+        let stdout = String::from_utf8_lossy(&bindgen.stdout);
+        let stderr = String::from_utf8_lossy(&bindgen.stderr);
+        eprintln!("stdout: {}", stdout);
+        eprintln!("stderr: {}", stderr);
+        panic!("Failed to publish NFMWorld.RustBindGen: {}", e);
+    }
 
     let bindgen_out = Command::new(format!("{workspace}/build/NFMWorld.RustBindGen"))
         .current_dir(format!("{workspace}/nfm-world"))
