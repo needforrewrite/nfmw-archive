@@ -136,6 +136,19 @@ impl User {
         Ok(id)
     }
 
+    pub async fn get_id_from_username(pool: &sqlx::PgPool, username: &str) -> Result<Option<i32>, sqlx::Error> {
+        let id = sqlx::query_scalar!(
+            r#"
+            SELECT id FROM users WHERE username = $1
+            "#,
+            username
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(id)
+    }
+
     /// Retrieve a user by username
     ///
     /// Note: This does NOT verify the password
