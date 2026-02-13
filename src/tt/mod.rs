@@ -1,5 +1,5 @@
 use sqlx::types::Uuid;
-use tokio::fs::write;
+use tokio::fs::{read, write};
 use crate::{ffi::SimulateTimeTrialResult, state::ThreadSafeState};
 
 pub fn get_tt_file_path(root: &str, tt_id: Uuid) -> String {
@@ -9,6 +9,11 @@ pub fn get_tt_file_path(root: &str, tt_id: Uuid) -> String {
 pub async fn write_tt_file(state: &ThreadSafeState, tt_id: Uuid, data: &[u8]) -> Result<(), std::io::Error> {
     let path = get_tt_file_path(&state.lock().await.config.filestore, tt_id);
     write(path, data).await
+}
+
+pub async fn read_tt_file(state: &ThreadSafeState, tt_id: Uuid) -> Result<Vec<u8>, std::io::Error> {
+    let path = get_tt_file_path(&state.lock().await.config.filestore, tt_id);
+    read(path).await
 }
 
 pub fn validate_upload_tt_file(file_bytes: &[u8]) -> Result<SimulateTimeTrialResult, String> {
