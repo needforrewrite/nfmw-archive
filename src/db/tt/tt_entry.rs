@@ -40,6 +40,23 @@ impl TimeTrialEntry {
         Ok(res)
     }
 
+    pub async fn update(pool: &sqlx::PgPool, tt_id: Uuid, tt_version: i32, total_ticks: i32) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE time_trials
+            SET tt_version = $1, total_ticks = $2, created_at = NOW()
+            WHERE id = $3
+            "#,
+            tt_version,
+            total_ticks,
+            tt_id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn filter(
         pool: &sqlx::PgPool,
         user_id: Option<i32>,

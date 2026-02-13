@@ -17,6 +17,7 @@ pub struct SearchTTRequest {
 #[derive(Debug, serde::Serialize)]
 pub struct SearchTTResponse {
     pub id: String,
+    pub ticks: i32,
     pub username: String,
     pub car_id: String,
     pub stage_id: String,
@@ -27,6 +28,7 @@ impl SearchTTResponse {
     pub fn from_time_trial_entry(entry: TimeTrialEntry, username: String) -> Self {
         SearchTTResponse {
             id: entry.id.to_string(),
+            ticks: entry.total_ticks,
             username,
             car_id: entry.car_id.to_string(),
             stage_id: entry.stage_id.to_string(),

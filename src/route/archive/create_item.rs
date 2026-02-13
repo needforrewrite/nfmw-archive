@@ -14,7 +14,7 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
         &lock.db_pool, 
         auth.to_str().map_err(|e| 
             (StatusCode::UNAUTHORIZED, Json(json!({"status": "invalid authorization token"})))
-        )?.to_owned()).await
+        )?).await
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "internal database error"}))))?
         .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"status": "invalid authorization token"}))))?;
 

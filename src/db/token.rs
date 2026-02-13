@@ -23,7 +23,7 @@ impl UserToken {
         Ok(())
     }
 
-    pub async fn get_user_by_token(pool: &PgPool, token: String) -> Result<Option<UserToken>, sqlx::Error> {
+    pub async fn get_user_by_token(pool: &PgPool, token: &str) -> Result<Option<UserToken>, sqlx::Error> {
         let entry = sqlx::query_as!(Self, r#"
             SELECT * FROM user_tokens
             WHERE token = $1

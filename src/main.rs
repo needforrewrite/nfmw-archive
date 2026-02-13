@@ -79,6 +79,7 @@ async fn main() {
         .route("/discord/login", post(discord::discord_login::login))
         .route("/discord/create_account", post(discord::discord_create_account::create_account))
         .route("/tt/search", post(route::tt::search_tt::search_tt))
+        .route("/tt/upload", patch(route::tt::upload_tt::upload_tt))
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);
