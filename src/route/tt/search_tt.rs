@@ -44,6 +44,8 @@ fn validate_search_tt_request(req: &SearchTTRequest) -> Result<(), String> {
     Ok(())
 }
 
+// TODO: sort by fastest first; for now just return in whatever order the database gives us
+// TODO: limit number of results returned and add pagination; since we aren't storing many things yet it's not an issue
 pub async fn search_tt(State(state): State<ThreadSafeState>, headers: HeaderMap, axum::Json(req): axum::Json<SearchTTRequest>) -> axum::response::Result<(StatusCode, axum::Json<Vec<SearchTTResponse>>)> {
     validate_search_tt_request(&req).map_err(|e| (axum::http::StatusCode::BAD_REQUEST, axum::Json(json!({"status": e}))))?;
 
