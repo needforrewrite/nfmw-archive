@@ -6,7 +6,7 @@ use sqlx::types::{Uuid, uuid::Version};
 
 use crate::{archive::{ArchiveItemType, parse::parse_file}, db::{archive::{archive_item::ArchiveItem, archive_item_tag::ArchiveItemTag, archive_tag::ArchiveTag, archive_tag_ownership::user_can_assign_tag}, token::UserToken}, state::ThreadSafeState};
 
-pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: HeaderMap, mut multipart: Multipart) -> axum::response::Result<(StatusCode, Json<serde_json::Value>)> {
+pub async fn create_stage_piece(State(state): State<ThreadSafeState>, headers: HeaderMap, mut multipart: Multipart) -> axum::response::Result<(StatusCode, Json<serde_json::Value>)> {
     let auth = headers.get("authorization").ok_or((StatusCode::UNAUTHORIZED, Json(json!({"status": "no authorization token provided"}))))?;
     let lock = state.lock().await;
 
@@ -18,76 +18,30 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "internal database error"}))))?
         .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"status": "invalid authorization token"}))))?;
 
-    // Every item must have a type and text data, but stages may also include a soundtrack. The soundtrack is sent as two parts: st_filename and st_data.
-    // st_name is required but st_data is optional for stages. This is because a file with st_name may already exist, in which case the stage can use that.
-    // In the event of a st_name clash, the soundtrack file must be renamed by the client first. Descriptive names are highly encouraged...
-    let mut st_name: Option<String> = None;
-    let mut st_data: Option<Vec<u8>> = None;
-    let mut r#type: Option<ArchiveItemType> = None;
+    let r#type: ArchiveItemType = ArchiveItemType::StagePiece;
     let mut data: Option<String> = None;
-    let mut id: Option<Uuid> = None;
+    let id: Uuid = Uuid::new_v4();
 
     while let Some(field) = multipart.next_field().await? {
         let name = field.name().ok_or((StatusCode::BAD_REQUEST, Json(json!({"status": "invalid multipart"}))))?.to_string();
         let mp_data = field.bytes().await?;
 
         match &name[..] {
-            "type" => {
-                let raw_type = mp_data[0];
-                r#type = Some(match raw_type {
-                    0 => ArchiveItemType::Car,
-                    1 => ArchiveItemType::Stage,
-                    2 => ArchiveItemType::StagePiece,
-                    3 => ArchiveItemType::Wheel,
-                    _ => {
-                        return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "invalid item type"}))));
-                    }
-                })
-            },
             "data" => {
                 data = Some(String::from_utf8(mp_data.to_vec()).map_err(|_| (StatusCode::BAD_REQUEST, Json(json!({"status": "invalid item data"}))))?);
             },
-            "st_name" => {
-                st_name = Some(String::from_utf8(mp_data.to_vec()).map_err(|_| (StatusCode::BAD_REQUEST, Json(json!({"status": "invalid soundtrack name"}))))?)
-            },
-            "st_data" => {
-                st_data = Some(mp_data.to_vec());
-            },
-            "id" => {
-                let string = String::from_utf8(mp_data.to_vec()).map_err(|_| (StatusCode::BAD_REQUEST, Json(json!({"status": "invalid id"}))))?;
-                let rawid = Uuid::parse_str(&string).map_err(|_| (StatusCode::BAD_REQUEST, Json(json!({"status": "invalid id"}))))?;
-                if let Some(v) = rawid.get_version() && v != Version::Random {
-                    return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "invalid id version"}))))
-                };
-
-                id = Some(rawid);
-            }
             _ => {
                 return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": format!("invalid multipart entry: {name}")}))))
             }
         }
     }
 
-    if (st_data.is_some() || st_name.is_some()) && let Some(t) = &r#type && *t != ArchiveItemType::Stage {
-        return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "soundtracks can only be uploaded with stages"}))))
-    }
-
-    if r#type.is_none() {
-        return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "item must have a type"}))))
-    } else if data.is_none() {
-        return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "item must have data"}))))
-    } else if id.is_none() {
-        return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "item must have an id"}))))
-    }
-
-    let r#type = r#type.unwrap();
-    let data = data.unwrap();
-
+    let data = data.unwrap_or(Err((StatusCode::BAD_REQUEST, Json(json!({"status": "item must have data"}))))?);
     if data.is_empty() {
         return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "item must have data"}))))
     }
 
-    let mut parsed = parse_file(data.clone(), r#type == ArchiveItemType::Stage)
+    let mut parsed = parse_file(data.clone(), false)
         .map_err(|e| (StatusCode::BAD_REQUEST, Json(
             json!({"status": format!("error parsing file: {e}")})
         )))?;
@@ -99,12 +53,17 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
         return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "each item is limited to a maximum of 5 tags"}))))
     }
 
-    let id = id.unwrap();
     if id.is_nil() {
         return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "invalid id"}))));
     }
 
-    let path = format!("{}/{}/{}.txt", lock.config.filestore, r#type.dir_name(), id.hyphenated().to_string());
+    // TODO: for any non-admin user, check that the author is the same as the authenticated username.
+    // In the client, the author field should be automatically populated with the correct value.
+    if parsed.author.is_none() || parsed.author.as_ref().unwrap().is_empty() {
+        return Ok((StatusCode::BAD_REQUEST, Json(json!({"status": "item must have an author"}))));
+    }
+
+    let path = format!("{}/{}/{}/{}.txt", lock.config.filestore, r#type.dir_name(), parsed.author.clone().unwrap(), id.hyphenated().to_string());
 
     let ex = std::fs::exists(&path);
     if let Ok(e) = ex && e == false {
@@ -149,5 +108,5 @@ pub async fn create_archive_item(State(state): State<ThreadSafeState>, headers: 
             .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"status": "internal database error on tag relation insertion"}))))?;
     }
 
-    Ok((StatusCode::OK, Json(serde_json::json!({"status": format!("item created with id {}", id.hyphenated().to_string())}))))
+    Ok((StatusCode::OK, Json(serde_json::json!({"status": format!("stage piece created", id.hyphenated().to_string()), "id": id.hyphenated().to_string()}))))
 }
