@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO username_claim_history (username, claim_count)\n            VALUES ($1, 1)\n            ON CONFLICT (username) DO UPDATE\n                SET claim_count = username_claim_history.claim_count + 1\n            RETURNING claim_count\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "claim_count",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "84b1cfdbc82a26a9a8fa3fe29a6ec21acf3169a600a4a66388fd591b6756bc46"
+}
