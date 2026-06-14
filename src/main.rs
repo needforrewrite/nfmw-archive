@@ -27,6 +27,9 @@ async fn main() {
     let db_pool = sqlx::PgPool::connect(&db_url).await.expect("Failed to create postgres connection pool");
     info!("Connected to database at {}", db_url);
 
+    sqlx::migrate!().run(&db_pool).await.expect("Failed to run migrations");
+    info!("Migrations applied");
+
     let state = Arc::new(Mutex::new(state::State {
         db_pool,
         request_client: reqwest::Client::new(),
