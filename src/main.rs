@@ -19,6 +19,7 @@ async fn main() {
     let config = load_config();
     let port = config.port;
 
+    dotenvy::dotenv().ok();
     let db_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set in environment variables");
 
