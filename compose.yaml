@@ -23,10 +23,7 @@ services:
       DATABASE_URL: "postgresql://postgres:postgres@nfmw_postgres:5432/appdb"
     ports:
       - "8074:8074"
-    volumes:
-      - nfmw_archive:/archive
     command: cargo run --release
 
 volumes:
   nfmw_pgdata:
-  nfmw_archive:
