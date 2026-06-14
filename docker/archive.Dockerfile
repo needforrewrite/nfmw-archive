@@ -75,6 +75,7 @@ COPY --from=builder /app/target/release/nfmw-archive /usr/local/bin/nfmw-archive
 
 EXPOSE 8074
 
+ENV RUST_LOG=info
 ENV DOTNET_ROOT=/usr/share/dotnet
 ENTRYPOINT ["/usr/local/bin/nfmw-archive"]
 

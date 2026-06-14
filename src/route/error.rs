@@ -40,7 +40,7 @@ impl IntoResponse for AppError {
 
         // Log the full error server-side, but don't leak internals to clients.
         if status == StatusCode::INTERNAL_SERVER_ERROR {
-            tracing::error!(error = ?self, "internal error");
+            log::error!("internal error: {:?}", self);
         }
 
         let message = match status {

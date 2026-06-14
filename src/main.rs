@@ -14,6 +14,8 @@ pub mod crypto;
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     let config = load_config();
     let port = config.port;
 
