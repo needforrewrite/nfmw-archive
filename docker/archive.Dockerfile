@@ -55,6 +55,7 @@ RUN pacman -Sy --noconfirm --needed \
 	base-devel \
  && pacman -Scc --noconfirm
  
+ENV DOTNET_INSTALL_DIR=/usr/share/dotnet
 # Install Rust toolchain via rustup
 ENV RUSTUP_HOME=/root/.rustup \
 	CARGO_HOME=/root/.cargo \
