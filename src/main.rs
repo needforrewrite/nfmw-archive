@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use axum::{Router, routing::{get, post}};
+use log::info;
 use tokio::sync::Mutex;
 
 use crate::config::load_config;
@@ -24,6 +25,7 @@ async fn main() {
         .expect("DATABASE_URL must be set in environment variables");
 
     let db_pool = sqlx::PgPool::connect(&db_url).await.expect("Failed to create postgres connection pool");
+    info!("Connected to database at {}", db_url);
 
     let state = Arc::new(Mutex::new(state::State {
         db_pool,
@@ -44,6 +46,8 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .expect("Failed to bind to address");
+
+    info!("Server listening on {}", addr);
 
     axum::serve(listener, router)
         .await
