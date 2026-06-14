@@ -24,8 +24,6 @@ services:
     ports:
       - "8074:8074"
     command: cargo run --release
-    depends_on:
-      - db
 
 volumes:
   nfmw_pgdata:
