@@ -66,6 +66,7 @@ RUN cargo install sqlx-cli
 
 RUN mkdir /migrations
 COPY --from=builder /app/migrations /migrations
+COPY --from=builder /app/config.toml /config.toml
 
 # Copy built binary and any required data
 COPY --from=builder /app/target/release/nfmw-archive /usr/local/bin/nfmw-archive
