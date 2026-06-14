@@ -21,6 +21,7 @@ RUN pacman -Sy --noconfirm --needed \
 	python \
  && pacman -Scc --noconfirm
 
+ENV SQLX_OFFLINE=true
 # Install .NET SDK (use dotnet-install script and request channel 10)
 ENV DOTNET_INSTALL_DIR=/usr/share/dotnet
 RUN curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
