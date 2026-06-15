@@ -70,4 +70,13 @@ impl PendingOauthRegistration {
         .await?;
         Ok(())
     }
+
+    pub async fn delete_expired(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE FROM pending_oauth_registrations WHERE expires_at < NOW()"#
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
 }

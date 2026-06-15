@@ -18,6 +18,7 @@ pub mod middleware;
 pub mod openapi;
 pub mod route;
 pub mod state;
+pub mod task;
 
 #[tokio::main]
 async fn main() {
@@ -77,7 +78,9 @@ async fn main() {
             "/api-docs/openapi.json",
             get(|| async { axum::Json(openapi::ApiDoc::openapi()) }),
         )
-        .with_state(state);
+        .with_state(state.clone());
+
+    task::register_tasks(state.clone());
 
     let router = router.layer(axum::middleware::from_fn(middleware::debug_logger));
 

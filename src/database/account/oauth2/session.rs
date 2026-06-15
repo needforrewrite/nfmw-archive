@@ -121,4 +121,13 @@ impl OauthSession {
         .await?;
         Ok(())
     }
+
+    pub async fn delete_expired(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE FROM oauth_sessions WHERE expires_at < NOW()"#
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
 }
