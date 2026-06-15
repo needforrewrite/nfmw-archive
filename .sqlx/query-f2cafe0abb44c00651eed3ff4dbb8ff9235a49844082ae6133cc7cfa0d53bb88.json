@@ -42,6 +42,21 @@
         "ordinal": 7,
         "name": "expires_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "result_status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "result_payload",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "poll_id",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -61,6 +76,9 @@
       true,
       true,
       false,
+      false,
+      true,
+      true,
       false
     ]
   },

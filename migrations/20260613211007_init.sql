@@ -131,9 +131,6 @@ CREATE TABLE users (
     -- The user's current, live username. Mutable.
     username            TEXT        NOT NULL UNIQUE,
 
-    -- Separate display name (mutable, no uniqueness requirement).
-    display_name        TEXT,
-
     email               TEXT        UNIQUE,
 
     -- The suffix this user inherited when they claimed their *current* username.
@@ -285,7 +282,6 @@ CREATE TABLE assets (
     -- stable client-facing reference "author_name/asset_name".
     asset_name          TEXT        NOT NULL,
 
-    display_name        TEXT        NOT NULL,
     description         TEXT,
     asset_type          asset_type  NOT NULL,
 

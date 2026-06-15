@@ -6,7 +6,6 @@ use sqlx::types::time::OffsetDateTime;
 pub struct User {
     pub id: i64,
     pub username: String,
-    pub display_name: Option<String>,
     pub email: Option<String>,
     pub current_author_suffix: i32,
     pub created_at: OffsetDateTime,

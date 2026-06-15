@@ -15,26 +15,21 @@
       },
       {
         "ordinal": 2,
-        "name": "display_name",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 3,
         "name": "email",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "current_author_suffix",
         "type_info": "Int4"
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
@@ -49,7 +44,6 @@
     "nullable": [
       false,
       false,
-      true,
       true,
       false,
       false,

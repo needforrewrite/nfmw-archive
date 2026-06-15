@@ -1,6 +1,6 @@
-use axum::{Json, extract::{Query, State}};
+use axum::{extract::{Query, State}};
+use log::debug;
 use serde::Deserialize;
-use serde_json::{Value, json};
 use time::{Duration, OffsetDateTime};
 
 use crate::{
@@ -19,14 +19,14 @@ pub struct CallbackQuery {
     state: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct DiscordTokenResponse {
     access_token: String,
     refresh_token: Option<String>,
     expires_in: i64,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct DiscordUser {
     id: String,
     email: Option<String>,
@@ -35,7 +35,7 @@ struct DiscordUser {
 pub async fn handler(
     State(state): State<ThreadSafeState>,
     Query(params): Query<CallbackQuery>,
-) -> Result<Json<Value>, AppError> {
+) -> Result<String, AppError> {
     let (pool, config, client) = {
         let g = state.lock().await;
         (g.db_pool.clone(), g.config.clone(), g.request_client.clone())
@@ -44,7 +44,8 @@ pub async fn handler(
     let session = OauthSession::get_by_state(&pool, &params.state)
         .await?
         .ok_or_else(|| AppError::BadRequest("invalid state".to_string()))?;
-    session.delete(&pool).await?;
+
+    debug!("Discord OAuth2 callback received for state: {}", params.state);
 
     let client_id = config.discord.client_id.to_string();
     let token_resp = client
@@ -63,6 +64,8 @@ pub async fn handler(
         .await
         .map_err(|e| AppError::Other(e.into()))?;
 
+    debug!("Discord OAuth2 token response received for state: {} - {:?}", params.state, token_resp);
+
     let discord_user = client
         .get("https://discord.com/api/users/@me")
         .bearer_auth(&token_resp.access_token)
@@ -72,6 +75,8 @@ pub async fn handler(
         .json::<DiscordUser>()
         .await
         .map_err(|e| AppError::Other(e.into()))?;
+
+    debug!("Discord user info retrieved for state: {} - {:?}", params.state, discord_user);
 
     let token_expires_at = OffsetDateTime::now_utc() + Duration::seconds(token_resp.expires_in);
 
@@ -85,10 +90,11 @@ pub async fn handler(
         let session_token = generate_base64_authentication_token();
         UserSessions::upsert(&pool, user.id, &session_token, "discord").await?;
 
-        return Ok(Json(json!({
-            "session_token": session_token,
-            "username": user.username,
-        })));
+        session.set_result(&pool, "login", &session_token).await?;
+
+        debug!("Existing user logged in via Discord OAuth2 for state: {} - user_id: {}", params.state, user.id);
+
+        return Ok("Login successful. You can now return to the application.".to_string());
     }
 
     let temp_token = generate_base64_authentication_token();
@@ -104,5 +110,9 @@ pub async fn handler(
     )
     .await?;
 
-    Ok(Json(json!({ "temp_token": temp_token })))
+    session.set_result(&pool, "create_account", &temp_token).await?;
+
+    debug!("New user registration initiated via Discord OAuth2 for state: {} - temp_token: {}", params.state, temp_token);
+
+    Ok("Registration started. You can now return to the application.".to_string())
 }

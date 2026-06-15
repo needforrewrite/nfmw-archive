@@ -6,6 +6,9 @@ pub struct OauthSession {
     pub id: i64,
     pub provider: String,
     pub state: String,
+    pub poll_id: String,
+    pub result_status: Option<String>,
+    pub result_payload: Option<String>,
     // only some providers require PKCE, so this is optional
     // some support but dont require, like Discord. don't use it then
     pub pkce_verifier: Option<String>,
@@ -17,6 +20,40 @@ pub struct OauthSession {
     pub expires_at: OffsetDateTime,
 }
 impl OauthSession {
+    pub async fn set_result(
+        &self,
+        pool: &sqlx::PgPool,
+        result_status: &str,
+        result_payload: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE oauth_sessions
+            SET result_status = $1, result_payload = $2
+            WHERE id = $3
+            "#,
+            result_status,
+            result_payload,
+            self.id
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn get_by_poll_id(pool: &sqlx::PgPool, poll_id: &str) -> Result<Option<Self>, sqlx::Error> {
+        let session = sqlx::query_as!(
+            OauthSession,
+            r#"
+            SELECT * FROM oauth_sessions WHERE poll_id = $1
+            "#,
+            poll_id
+        )
+        .fetch_optional(pool)
+        .await?;
+        Ok(session)
+    }
+
     pub async fn insert_base(
         pool: &sqlx::PgPool,
         provider: &str,

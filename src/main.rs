@@ -8,6 +8,7 @@ use crate::config::load_config;
 
 pub mod ffi;
 pub mod database;
+pub mod middleware;
 pub mod route;
 pub mod state;
 pub mod config;
@@ -40,10 +41,13 @@ async fn main() {
         .route("/", get(route::root))
         .route("/auth/discord/start", get(route::account::oauth2::discord::init::handler))
         .route("/auth/discord/callback", get(route::account::oauth2::discord::callback::handler))
-        .route("/auth/discord/create_account", post(route::account::oauth2::discord::create::handler))
+        .route("/auth/discord/create_account", post(route::account::oauth2::discord::create_account::handler))
         .route("/auth/local/login", post(route::account::local::login::handler))
         .route("/auth/local/create_account", post(route::account::local::create::handler))
+        .route("/auth/poll/{poll_id}", get(route::account::oauth2::poll::handle))
         .with_state(state);
+
+    let router = router.layer(axum::middleware::from_fn(middleware::debug_logger));
 
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr)

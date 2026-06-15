@@ -15,7 +15,7 @@ pub async fn handler(State(state): State<ThreadSafeState>) -> Result<Json<Value>
     };
 
     let oauth_state = generate_base64_authentication_token();
-    OauthSession::insert_base(&pool, "discord", &oauth_state).await?;
+    let session = OauthSession::insert_base(&pool, "discord", &oauth_state).await?;
 
     let redirect_uri = urlencoding::encode(&config.discord.redirect_uri).into_owned();
     let state_encoded = urlencoding::encode(&oauth_state).into_owned();
@@ -25,5 +25,5 @@ pub async fn handler(State(state): State<ThreadSafeState>) -> Result<Json<Value>
         config.discord.client_id, redirect_uri, state_encoded
     );
 
-    Ok(Json(json!({ "url": url })))
+    Ok(Json(json!({ "url": url, "poll_id": &session.poll_id })))
 }

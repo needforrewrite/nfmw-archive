@@ -18,7 +18,6 @@ pub struct Asset {
     pub owner_id: i64,
     pub author_name: String,
     pub asset_name: String,
-    pub display_name: String,
     pub description: Option<String>,
     pub asset_type: AssetType,
     pub archive_path: Option<String>,

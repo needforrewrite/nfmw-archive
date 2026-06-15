@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT * FROM oauth_sessions WHERE state = $1\n            ",
+  "query": "\n            SELECT * FROM oauth_sessions WHERE poll_id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -78,5 +78,5 @@
       false
     ]
   },
-  "hash": "281a9ea8e728d5cc9014847b5dea16d99df2cf0ccba064508de9f4947da21419"
+  "hash": "c5029e213a89005111be4ac09479569b2f04f201dda54c959b3cb2f48d26c47f"
 }
