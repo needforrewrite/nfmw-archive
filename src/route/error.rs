@@ -3,7 +3,13 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use serde_json::json;
+use serde::Serialize;
+use utoipa::ToSchema;
+
+#[derive(Serialize, ToSchema)]
+pub struct ErrorResponse {
+    pub error: String,
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
@@ -48,6 +54,8 @@ impl IntoResponse for AppError {
             _ => self.to_string(),
         };
 
-        (status, Json(json!({ "error": message }))).into_response()
+        let error_response = ErrorResponse { error: message.clone() };
+        let body = Json(serde_json::to_string(&error_response).unwrap());
+        (status, body).into_response()
     }
 }

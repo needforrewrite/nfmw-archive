@@ -1,14 +1,30 @@
 use axum::{Json, extract::State};
-use serde_json::{Value, json};
+use serde::Serialize;
+use utoipa::ToSchema;
 
 use crate::{
     crypto::generate_base64_authentication_token,
     database::account::oauth2::session::OauthSession,
-    route::error::AppError,
+    route::error::{AppError, ErrorResponse},
     state::ThreadSafeState,
 };
 
-pub async fn handler(State(state): State<ThreadSafeState>) -> Result<Json<Value>, AppError> {
+#[derive(Serialize, ToSchema)]
+pub struct DiscordInitResponse {
+    pub url: String,
+    pub poll_id: String,
+}
+
+#[utoipa::path(
+    get,
+    path = "/auth/discord/start",
+    responses(
+        (status = 200, description = "Discord OAuth2 authorization URL and poll ID", body = DiscordInitResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+    ),
+    tag = "discord-oauth"
+)]
+pub async fn handler(State(state): State<ThreadSafeState>) -> Result<Json<DiscordInitResponse>, AppError> {
     let (pool, config) = {
         let g = state.lock().await;
         (g.db_pool.clone(), g.config.clone())
@@ -25,5 +41,8 @@ pub async fn handler(State(state): State<ThreadSafeState>) -> Result<Json<Value>
         config.discord.client_id, redirect_uri, state_encoded
     );
 
-    Ok(Json(json!({ "url": url, "poll_id": &session.poll_id })))
+    Ok(Json(DiscordInitResponse {
+        url,
+        poll_id: session.poll_id,
+    }))
 }

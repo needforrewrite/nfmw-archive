@@ -1,7 +1,8 @@
-use axum::{extract::{Query, State}};
+use axum::extract::{Query, State};
 use log::debug;
 use serde::Deserialize;
 use time::{Duration, OffsetDateTime};
+use utoipa::IntoParams;
 
 use crate::{
     crypto::generate_base64_authentication_token,
@@ -9,13 +10,15 @@ use crate::{
         OauthIdentity, User, UserSessions,
         oauth2::{pendingregistration::PendingOauthRegistration, session::OauthSession},
     },
-    route::error::AppError,
+    route::error::{AppError, ErrorResponse},
     state::ThreadSafeState,
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub struct CallbackQuery {
+    /// OAuth2 authorization code from Discord
     code: String,
+    /// OAuth2 state parameter for CSRF protection
     state: String,
 }
 
@@ -32,20 +35,38 @@ struct DiscordUser {
     email: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/auth/discord/callback",
+    params(CallbackQuery),
+    responses(
+        (status = 200, description = "OAuth2 callback handled; login or registration initiated", body = String, content_type = "text/plain"),
+        (status = 400, description = "Invalid state or code", body = ErrorResponse, content_type = "application/json"),
+        (status = 500, description = "Internal server error", body = ErrorResponse, content_type = "application/json"),
+    ),
+    tag = "discord-oauth"
+)]
 pub async fn handler(
     State(state): State<ThreadSafeState>,
     Query(params): Query<CallbackQuery>,
 ) -> Result<String, AppError> {
     let (pool, config, client) = {
         let g = state.lock().await;
-        (g.db_pool.clone(), g.config.clone(), g.request_client.clone())
+        (
+            g.db_pool.clone(),
+            g.config.clone(),
+            g.request_client.clone(),
+        )
     };
 
     let session = OauthSession::get_by_state(&pool, &params.state)
         .await?
         .ok_or_else(|| AppError::BadRequest("invalid state".to_string()))?;
 
-    debug!("Discord OAuth2 callback received for state: {}", params.state);
+    debug!(
+        "Discord OAuth2 callback received for state: {}",
+        params.state
+    );
 
     let client_id = config.discord.client_id.to_string();
     let token_resp = client
@@ -64,7 +85,10 @@ pub async fn handler(
         .await
         .map_err(|e| AppError::Other(e.into()))?;
 
-    debug!("Discord OAuth2 token response received for state: {} - {:?}", params.state, token_resp);
+    debug!(
+        "Discord OAuth2 token response received for state: {} - {:?}",
+        params.state, token_resp
+    );
 
     let discord_user = client
         .get("https://discord.com/api/users/@me")
@@ -76,7 +100,10 @@ pub async fn handler(
         .await
         .map_err(|e| AppError::Other(e.into()))?;
 
-    debug!("Discord user info retrieved for state: {} - {:?}", params.state, discord_user);
+    debug!(
+        "Discord user info retrieved for state: {} - {:?}",
+        params.state, discord_user
+    );
 
     let token_expires_at = OffsetDateTime::now_utc() + Duration::seconds(token_resp.expires_in);
 
@@ -92,7 +119,10 @@ pub async fn handler(
 
         session.set_result(&pool, "login", &session_token).await?;
 
-        debug!("Existing user logged in via Discord OAuth2 for state: {} - user_id: {}", params.state, user.id);
+        debug!(
+            "Existing user logged in via Discord OAuth2 for state: {} - user_id: {}",
+            params.state, user.id
+        );
 
         return Ok("Login successful. You can now return to the application.".to_string());
     }
@@ -110,9 +140,14 @@ pub async fn handler(
     )
     .await?;
 
-    session.set_result(&pool, "create_account", &temp_token).await?;
+    session
+        .set_result(&pool, "create_account", &temp_token)
+        .await?;
 
-    debug!("New user registration initiated via Discord OAuth2 for state: {} - temp_token: {}", params.state, temp_token);
+    debug!(
+        "New user registration initiated via Discord OAuth2 for state: {} - temp_token: {}",
+        params.state, temp_token
+    );
 
     Ok("Registration started. You can now return to the application.".to_string())
 }

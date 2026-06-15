@@ -1,9 +1,29 @@
 use axum::{Json, extract::{Path, State}};
-use serde_json::json;
+use serde::Serialize;
+use utoipa::ToSchema;
 
-use crate::{database::account::oauth2::session::OauthSession, state::ThreadSafeState, route::error::AppError};
+use crate::{database::account::oauth2::session::OauthSession, route::error::{AppError, ErrorResponse}, state::ThreadSafeState};
 
-pub async fn handle(State(state): State<ThreadSafeState>, Path(poll_id): Path<String>) -> Result<Json<serde_json::Value>, AppError> {
+#[derive(Serialize, ToSchema)]
+pub struct PollResponse {
+    pub status: String,
+    pub payload: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/auth/poll/{poll_id}",
+    params(
+        ("poll_id" = String, Path, description = "OAuth2 poll session ID returned by /auth/discord/start")
+    ),
+    responses(
+        (status = 200, description = "Poll result (pending or final)", body = PollResponse),
+        (status = 404, description = "Poll session not found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+    ),
+    tag = "oauth-poll"
+)]
+pub async fn handle(State(state): State<ThreadSafeState>, Path(poll_id): Path<String>) -> Result<Json<PollResponse>, AppError> {
     let pool = {
         let g = state.lock().await;
         g.db_pool.clone()
@@ -15,8 +35,14 @@ pub async fn handle(State(state): State<ThreadSafeState>, Path(poll_id): Path<St
 
     if let Some(ref result_status) = session.result_status {
         session.delete(&pool).await?;
-        Ok(Json(json!({ "status": result_status, "payload": session.result_payload })))
+        Ok(Json(PollResponse {
+            status: result_status.clone(),
+            payload: session.result_payload,
+        }))
     } else {
-        Ok(Json(json!({ "status": "pending", "payload": "" })))
+        Ok(Json(PollResponse {
+            status: "pending".into(),
+            payload: None,
+        }))
     }
 }
