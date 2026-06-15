@@ -9,10 +9,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
-    crypto::generate_base64_authentication_token,
+    crypto::{generate_base64_authentication_token, hash_token},
     database::account::{LocalCredentials, User, UserSessions},
     route::error::{AppError, ErrorResponse},
-    state::ThreadSafeState,
+    state::AppState,
 };
 
 // Computed once on first use; gives us a real argon2 hash with the same parameters as user
@@ -54,10 +54,10 @@ pub struct LoginLocalAccountResponse {
     tag = "local-auth"
 )]
 pub async fn handler(
-    State(state): State<ThreadSafeState>,
+    State(state): State<AppState>,
     Json(body): Json<LoginLocalAccountRequest>,
 ) -> Result<Json<LoginLocalAccountResponse>, AppError> {
-    let pool = &state.lock().await.db_pool;
+    let pool = &state.db_pool;
 
     let user = User::get_by_username(pool, &body.username)
         .await
@@ -87,7 +87,9 @@ pub async fn handler(
     if user.is_some() && credentials.is_some() && verified {
         let user = user.unwrap();
         let session_token = generate_base64_authentication_token();
-        UserSessions::upsert(pool, user.id, &session_token, "local")
+        let session_token_hash = hash_token(&session_token);
+
+        UserSessions::upsert(pool, user.id, &session_token_hash, "local")
             .await
             .map_err(|e| AppError::Database(e))?;
 

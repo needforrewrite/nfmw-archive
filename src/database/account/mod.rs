@@ -99,7 +99,7 @@ impl LocalCredentials {
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct UserSessions {
     pub user_id: i64,
-    pub token: String,
+    pub token_hash: String,
     pub auth_provider: String,
     pub created_at: OffsetDateTime,
     pub expires_at: OffsetDateTime,
@@ -109,16 +109,16 @@ impl UserSessions {
     pub async fn upsert(
         pool: &sqlx::PgPool,
         user_id: i64,
-        token: &str,
+        token_hash: &str,
         auth_provider: &str,
     ) -> Result<Self, sqlx::Error> {
         sqlx::query_as!(
             UserSessions,
             r#"
-            INSERT INTO user_sessions (user_id, token, auth_provider)
+            INSERT INTO user_sessions (user_id, token_hash, auth_provider)
             VALUES ($1, $2, $3)
             ON CONFLICT (user_id) DO UPDATE SET
-                token = EXCLUDED.token,
+                token_hash = EXCLUDED.token_hash,
                 auth_provider = EXCLUDED.auth_provider,
                 created_at = now(),
                 last_seen_at = now(),
@@ -126,11 +126,39 @@ impl UserSessions {
             RETURNING *
             "#,
             user_id,
-            token,
+            token_hash,
             auth_provider,
         )
         .fetch_one(pool)
         .await
+    }
+
+    pub async fn get_by_token_hash(pool: &sqlx::PgPool, token_hash: &str) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query_as!(
+            UserSessions,
+            r#"SELECT * FROM user_sessions WHERE token_hash = $1"#,
+            token_hash
+        )
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn delete(&self, pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(r#"DELETE FROM user_sessions WHERE user_id = $1"#, self.user_id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn touch_session(pool: &sqlx::PgPool, token_hash: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "SELECT touch_session($1)",
+            token_hash,
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
     }
 }
 

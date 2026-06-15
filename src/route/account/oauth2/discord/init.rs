@@ -6,7 +6,7 @@ use crate::{
     crypto::generate_base64_authentication_token,
     database::account::oauth2::session::OauthSession,
     route::error::{AppError, ErrorResponse},
-    state::ThreadSafeState,
+    state::AppState,
 };
 
 #[derive(Serialize, ToSchema)]
@@ -24,10 +24,9 @@ pub struct DiscordInitResponse {
     ),
     tag = "discord-oauth"
 )]
-pub async fn handler(State(state): State<ThreadSafeState>) -> Result<Json<DiscordInitResponse>, AppError> {
+pub async fn handler(State(state): State<AppState>) -> Result<Json<DiscordInitResponse>, AppError> {
     let (pool, config) = {
-        let g = state.lock().await;
-        (g.db_pool.clone(), g.config.clone())
+        (state.db_pool.clone(), state.config.clone())
     };
 
     let oauth_state = generate_base64_authentication_token();

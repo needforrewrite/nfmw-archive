@@ -1,12 +1,12 @@
 use anyhow::Ok;
 use log::info;
 
-use crate::{database::account::oauth2::{pendingregistration::PendingOauthRegistration, session::OauthSession}, state::ThreadSafeState};
+use crate::{database::account::oauth2::{pendingregistration::PendingOauthRegistration, session::OauthSession}, state::AppState};
 
-pub async fn clear_expired_pending_oauth(state: ThreadSafeState) -> Result<(), anyhow::Error> {
+pub async fn clear_expired_pending_oauth(state: AppState) -> Result<(), anyhow::Error> {
     info!("Starting task: Clear expired pending OAuth registrations and sessions");
 
-    let pool = state.lock().await.db_pool.clone();
+    let pool = state.db_pool.clone();
 
     PendingOauthRegistration::delete_expired(&pool)
         .await

@@ -4,7 +4,7 @@ use time::OffsetDateTime;
 use utoipa::ToSchema;
 
 use crate::{
-    crypto::generate_base64_authentication_token,
+    crypto::{generate_base64_authentication_token, hash_token},
     database::account::{
         OauthIdentity, User, UserSessions, oauth2::pendingregistration::PendingOauthRegistration,
     },
@@ -12,7 +12,7 @@ use crate::{
         account::validate_username,
         error::{AppError, ErrorResponse},
     },
-    state::ThreadSafeState,
+    state::AppState,
 };
 
 #[derive(Deserialize, ToSchema)]
@@ -39,13 +39,10 @@ pub struct DiscordCreateAccountResponse {
     tag = "discord-oauth"
 )]
 pub async fn handler(
-    State(state): State<ThreadSafeState>,
+    State(state): State<AppState>,
     Json(body): Json<CreateAccountBody>,
 ) -> Result<Json<DiscordCreateAccountResponse>, AppError> {
-    let pool = {
-        let g = state.lock().await;
-        g.db_pool.clone()
-    };
+    let pool = state.db_pool.clone();
 
     let pending = PendingOauthRegistration::get_by_temp_token(&pool, &body.temp_token)
         .await?
@@ -83,7 +80,9 @@ pub async fn handler(
     pending.delete(&pool).await?;
 
     let session_token = generate_base64_authentication_token();
-    UserSessions::upsert(&pool, user.id, &session_token, "discord").await?;
+    let session_token_hash = hash_token(&session_token);
+
+    UserSessions::upsert(&pool, user.id, &session_token_hash, "discord").await?;
 
     Ok(Json(DiscordCreateAccountResponse {
         session_token,

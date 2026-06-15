@@ -13,7 +13,7 @@ use crate::{
         account::validate_username,
         error::{AppError, ErrorResponse},
     },
-    state::ThreadSafeState,
+    state::AppState,
 };
 
 pub fn validate_local_password(password: &str) -> Result<(), String> {
@@ -63,10 +63,10 @@ pub struct CreateLocalAccountResponse {
     tag = "local-auth"
 )]
 pub async fn handler(
-    State(state): State<ThreadSafeState>,
+    State(state): State<AppState>,
     Json(body): Json<CreateLocalAccountRequest>,
 ) -> Result<Json<CreateLocalAccountResponse>, AppError> {
-    let pool = &state.lock().await.db_pool;
+    let pool = &state.db_pool;
 
     validate_username(&body.username).map_err(|e| AppError::BadRequest(e))?;
     validate_local_password(&body.password).map_err(|e| AppError::BadRequest(e))?;

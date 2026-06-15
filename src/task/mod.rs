@@ -1,10 +1,10 @@
 use log::error;
 
-use crate::state::ThreadSafeState;
+use crate::state::AppState;
 
 pub mod clear_expired_pending_oauth;
 
-pub fn clear_expired_pending_oauth_task(state: ThreadSafeState) {
+pub fn clear_expired_pending_oauth_task(state: AppState) {
     let state = state.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(60 * 60)); // Run every hour
@@ -17,6 +17,6 @@ pub fn clear_expired_pending_oauth_task(state: ThreadSafeState) {
     });
 }
 
-pub fn register_tasks(state: ThreadSafeState) {
+pub fn register_tasks(state: AppState) {
     clear_expired_pending_oauth_task(state);
 }

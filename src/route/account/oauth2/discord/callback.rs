@@ -5,15 +5,15 @@ use time::{Duration, OffsetDateTime};
 use utoipa::IntoParams;
 
 use crate::{
-    crypto::generate_base64_authentication_token,
+    crypto::{generate_base64_authentication_token, hash_token},
     database::account::{
         OauthIdentity, User, UserSessions,
         oauth2::{pendingregistration::PendingOauthRegistration, session::OauthSession},
     },
     route::error::{AppError, ErrorResponse},
-    state::ThreadSafeState,
+    state::AppState,
 };
-
+    
 #[derive(Deserialize, IntoParams)]
 pub struct CallbackQuery {
     /// OAuth2 authorization code from Discord
@@ -47,15 +47,14 @@ struct DiscordUser {
     tag = "discord-oauth"
 )]
 pub async fn handler(
-    State(state): State<ThreadSafeState>,
+    State(state): State<AppState>,
     Query(params): Query<CallbackQuery>,
 ) -> Result<String, AppError> {
     let (pool, config, client) = {
-        let g = state.lock().await;
         (
-            g.db_pool.clone(),
-            g.config.clone(),
-            g.request_client.clone(),
+            state.db_pool.clone(),
+            state.config.clone(),
+            state.request_client.clone(),
         )
     };
 
@@ -115,7 +114,9 @@ pub async fn handler(
             .ok_or_else(|| AppError::Other(anyhow::anyhow!("orphaned oauth identity")))?;
 
         let session_token = generate_base64_authentication_token();
-        UserSessions::upsert(&pool, user.id, &session_token, "discord").await?;
+        let session_token_hash = hash_token(&session_token);
+
+        UserSessions::upsert(&pool, user.id, &session_token_hash, "discord").await?;
 
         session.set_result(&pool, "login", &session_token).await?;
 

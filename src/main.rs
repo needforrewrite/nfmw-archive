@@ -19,6 +19,7 @@ pub mod openapi;
 pub mod route;
 pub mod state;
 pub mod task;
+pub mod extractor;
 
 #[tokio::main]
 async fn main() {
@@ -42,11 +43,11 @@ async fn main() {
         .expect("Failed to run migrations");
     info!("Migrations applied");
 
-    let state = Arc::new(Mutex::new(state::State {
+    let state = state::AppState {
         db_pool,
         request_client: reqwest::Client::new(),
-        config,
-    }));
+        config: Arc::new(config),
+    };
 
     let router = Router::new()
         .route("/", get(route::root))

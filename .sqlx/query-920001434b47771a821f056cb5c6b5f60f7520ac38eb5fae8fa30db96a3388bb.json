@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO user_sessions (user_id, token_hash, auth_provider)\n            VALUES ($1, $2, $3)\n            ON CONFLICT (user_id) DO UPDATE SET\n                token_hash = EXCLUDED.token_hash,\n                auth_provider = EXCLUDED.auth_provider,\n                created_at = now(),\n                last_seen_at = now(),\n                expires_at = now() + INTERVAL '30 days'\n            RETURNING *\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "token_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "auth_provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "last_seen_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "expires_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "920001434b47771a821f056cb5c6b5f60f7520ac38eb5fae8fa30db96a3388bb"
+}

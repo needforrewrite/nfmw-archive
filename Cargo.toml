@@ -31,3 +31,4 @@ time = "0.3"
 env = "1.0.1"
 argon2 = "0.5.3"
 utoipa = { version = "5", features = ["axum_extras", "time"] }
+chrono = "0.4.45"

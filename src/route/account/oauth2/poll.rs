@@ -2,7 +2,7 @@ use axum::{Json, extract::{Path, State}};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::{database::account::oauth2::session::OauthSession, route::error::{AppError, ErrorResponse}, state::ThreadSafeState};
+use crate::{database::account::oauth2::session::OauthSession, route::error::{AppError, ErrorResponse}, state::AppState};
 
 #[derive(Serialize, ToSchema)]
 pub struct PollResponse {
@@ -23,12 +23,9 @@ pub struct PollResponse {
     ),
     tag = "oauth-poll"
 )]
-pub async fn handle(State(state): State<ThreadSafeState>, Path(poll_id): Path<String>) -> Result<Json<PollResponse>, AppError> {
-    let pool = {
-        let g = state.lock().await;
-        g.db_pool.clone()
-    };
-
+pub async fn handle(State(state): State<AppState>, Path(poll_id): Path<String>) -> Result<Json<PollResponse>, AppError> {
+    let pool = state.db_pool.clone();
+    
     let session = OauthSession::get_by_poll_id(&pool, &poll_id)
         .await?
         .ok_or_else(|| AppError::NotFound)?;

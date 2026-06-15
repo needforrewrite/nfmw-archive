@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT touch_session($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "touch_session",
+        "type_info": "Void"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "41fd5a8e6d604f4b208e6203a2719576e76642745b5ffc1381baa1adf4fb9597"
+}
