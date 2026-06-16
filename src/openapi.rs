@@ -1,15 +1,13 @@
 use utoipa::OpenApi;
 
 use crate::route::{
-    HealthResponse,
-    account::{
+    HealthResponse, account::{
         local::{create::CreateLocalAccountResponse, login::LoginLocalAccountResponse},
         oauth2::{
             discord::{create_account::DiscordCreateAccountResponse, init::DiscordInitResponse},
             poll::PollResponse,
         },
-    },
-    error::ErrorResponse,
+    }, archive::create_asset::CreateAssetResponse, error::ErrorResponse
 };
 
 #[derive(OpenApi)]
@@ -22,6 +20,7 @@ use crate::route::{
         crate::route::account::oauth2::discord::callback::discord_login_callback,
         crate::route::account::oauth2::discord::create_account::discord_create_account,
         crate::route::account::oauth2::poll::poll_oauth,
+        crate::route::archive::create_asset
     ),
     components(
         schemas(
@@ -35,6 +34,7 @@ use crate::route::{
             DiscordInitResponse,
             DiscordCreateAccountResponse,
             PollResponse,
+            CreateAssetResponse
         )
     ),
     info(
@@ -47,6 +47,7 @@ use crate::route::{
         (name = "local-auth", description = "Local username/password authentication"),
         (name = "discord-oauth", description = "Discord OAuth2 authentication"),
         (name = "oauth-poll", description = "OAuth2 result polling"),
+        (name = "asset-management", description = "Uploading and management of assets")
     )
 )]
 pub struct ApiDoc;
