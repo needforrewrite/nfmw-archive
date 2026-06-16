@@ -20,7 +20,7 @@ use crate::route::{
         crate::route::account::oauth2::discord::callback::discord_login_callback,
         crate::route::account::oauth2::discord::create_account::discord_create_account,
         crate::route::account::oauth2::poll::poll_oauth,
-        crate::route::archive::create_asset
+        crate::route::archive::create_asset::create_asset
     ),
     components(
         schemas(
