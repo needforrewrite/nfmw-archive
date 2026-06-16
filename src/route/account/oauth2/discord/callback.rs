@@ -46,7 +46,7 @@ struct DiscordUser {
     ),
     tag = "discord-oauth"
 )]
-pub async fn handler(
+pub async fn discord_login_callback(
     State(state): State<AppState>,
     Query(params): Query<CallbackQuery>,
 ) -> Result<String, AppError> {

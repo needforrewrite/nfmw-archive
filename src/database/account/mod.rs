@@ -13,6 +13,18 @@ pub struct User {
 }
 
 impl User {
+    pub async fn get_canonical_author_name_from_user_id(
+        pool: &sqlx::PgPool,
+        user_id: i64
+    ) -> Result<Option<String>, sqlx::Error> {
+        let user = Self::get_by_id(pool, user_id).await?;
+        if let Some(user) = user {
+            return Ok(Some(format!("{}-{}", user.username, user.current_author_suffix)))
+        }
+
+        return Ok(None)
+    }
+
     pub async fn create(
         pool: &sqlx::PgPool,
         username: &str,
@@ -28,7 +40,7 @@ impl User {
                 SET claim_count = username_claim_history.claim_count + 1
             RETURNING claim_count
             "#,
-            username
+            username.to_ascii_lowercase()
         )
         .fetch_one(&mut *tx)
         .await?;
@@ -64,6 +76,17 @@ impl User {
             .execute(pool)
             .await?;
         Ok(())
+    }
+
+    pub async fn username_taken(pool: &sqlx::PgPool, username: &str) -> Result<bool, sqlx::Error> {
+        let exists = sqlx::query_scalar!(
+            r#"SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(username) = LOWER($1))"#,
+            username
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(exists.unwrap_or(false))
     }
 }
 

@@ -20,6 +20,7 @@ pub mod route;
 pub mod state;
 pub mod task;
 pub mod extractor;
+pub mod store;
 
 #[tokio::main]
 async fn main() {
@@ -53,31 +54,35 @@ async fn main() {
         .route("/", get(route::root))
         .route(
             "/auth/discord/start",
-            get(route::account::oauth2::discord::init::handler),
+            get(route::account::oauth2::discord::init::discord_oauth_start),
         )
         .route(
             "/auth/discord/callback",
-            get(route::account::oauth2::discord::callback::handler),
+            get(route::account::oauth2::discord::callback::discord_login_callback),
         )
         .route(
             "/auth/discord/create_account",
-            post(route::account::oauth2::discord::create_account::handler),
+            post(route::account::oauth2::discord::create_account::discord_create_account),
         )
         .route(
             "/auth/local/login",
-            post(route::account::local::login::handler),
+            post(route::account::local::login::login_local_account),
         )
         .route(
             "/auth/local/create_account",
-            post(route::account::local::create::handler),
+            post(route::account::local::create::create_local_account),
         )
         .route(
             "/auth/poll/{poll_id}",
-            get(route::account::oauth2::poll::handle),
+            get(route::account::oauth2::poll::poll_oauth),
         )
         .route(
             "/api-docs/openapi.json",
             get(|| async { axum::Json(openapi::ApiDoc::openapi()) }),
+        )
+        .route(
+            "/assets/create",
+            post(route::archive::create_asset::create_asset),
         )
         .with_state(state.clone());
 

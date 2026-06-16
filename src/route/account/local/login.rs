@@ -53,7 +53,7 @@ pub struct LoginLocalAccountResponse {
     ),
     tag = "local-auth"
 )]
-pub async fn handler(
+pub async fn login_local_account(
     State(state): State<AppState>,
     Json(body): Json<LoginLocalAccountRequest>,
 ) -> Result<Json<LoginLocalAccountResponse>, AppError> {

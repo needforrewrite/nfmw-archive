@@ -23,7 +23,7 @@ pub struct PollResponse {
     ),
     tag = "oauth-poll"
 )]
-pub async fn handle(State(state): State<AppState>, Path(poll_id): Path<String>) -> Result<Json<PollResponse>, AppError> {
+pub async fn poll_oauth(State(state): State<AppState>, Path(poll_id): Path<String>) -> Result<Json<PollResponse>, AppError> {
     let pool = state.db_pool.clone();
     
     let session = OauthSession::get_by_poll_id(&pool, &poll_id)

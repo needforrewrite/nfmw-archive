@@ -38,7 +38,7 @@ pub struct DiscordCreateAccountResponse {
     ),
     tag = "discord-oauth"
 )]
-pub async fn handler(
+pub async fn discord_create_account(
     State(state): State<AppState>,
     Json(body): Json<CreateAccountBody>,
 ) -> Result<Json<DiscordCreateAccountResponse>, AppError> {
@@ -53,6 +53,10 @@ pub async fn handler(
     }
 
     validate_username(&body.username).map_err(|e| AppError::BadRequest(e))?;
+
+    if User::username_taken(&pool, &body.username).await? {
+        return Err(AppError::BadRequest("username already taken".to_string()));
+    }
 
     let user = User::create(&pool, &body.username, pending.email.as_deref())
         .await

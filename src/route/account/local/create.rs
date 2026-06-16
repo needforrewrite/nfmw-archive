@@ -62,7 +62,7 @@ pub struct CreateLocalAccountResponse {
     ),
     tag = "local-auth"
 )]
-pub async fn handler(
+pub async fn create_local_account(
     State(state): State<AppState>,
     Json(body): Json<CreateLocalAccountRequest>,
 ) -> Result<Json<CreateLocalAccountResponse>, AppError> {
@@ -70,6 +70,10 @@ pub async fn handler(
 
     validate_username(&body.username).map_err(|e| AppError::BadRequest(e))?;
     validate_local_password(&body.password).map_err(|e| AppError::BadRequest(e))?;
+
+    if User::username_taken(&pool, &body.username).await? {
+        return Err(AppError::BadRequest("username already taken".to_string()));
+    }
 
     let user = User::create(&pool, &body.username, None)
         .await

@@ -25,6 +25,12 @@ pub enum AppError {
     #[error(transparent)]
     Database(#[from] sqlx::Error),
 
+    #[error("conflict: {0}")]
+    Conflict(String),
+
+    #[error("provided content or asset is larger than the maximum allowed of {0}kB")]
+    ContentTooLarge(u32),
+
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
@@ -35,6 +41,8 @@ impl AppError {
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppError::Unauthorized => StatusCode::UNAUTHORIZED,
+            AppError::Conflict(_) => StatusCode::CONFLICT,
+            AppError::ContentTooLarge(_) => StatusCode::PAYLOAD_TOO_LARGE,
             AppError::Database(_) | AppError::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

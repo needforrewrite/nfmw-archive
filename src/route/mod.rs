@@ -1,5 +1,6 @@
 pub mod account;
 pub mod error;
+pub mod archive;
 
 use axum::{extract::State, response::Json};
 use serde::Serialize;

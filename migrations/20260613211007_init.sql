@@ -248,7 +248,8 @@ CREATE TYPE asset_type AS ENUM (
     'track_piece',
     'texture',
     'sound',
-    'other'
+    'campaign',
+    'wheel'
 );
 
 -- Every user-uploaded asset.
@@ -282,13 +283,15 @@ CREATE TABLE assets (
     -- stable client-facing reference "author_name/asset_name".
     asset_name          TEXT        NOT NULL,
 
+    -- Also immutable; related to asset name, but more user friendly.
+    -- Used in search results and for displaying the asset.
+    display_name        TEXT        NOT NULL,
+
     description         TEXT,
     asset_type          asset_type  NOT NULL,
 
     -- Path / key to the monolithic archive in object storage (e.g. an S3 key).
-    -- NULL for assets that exist only as declared dependencies and have no
-    -- standalone archive.
-    archive_path        TEXT,
+    archive_path        TEXT        NOT NULL,
 
     -- Visibility flag for soft-delete / unlisted assets.
     is_public           BOOLEAN     NOT NULL DEFAULT true,
@@ -298,7 +301,7 @@ CREATE TABLE assets (
 
     -- The client-facing "author_name/asset_name" reference must be globally unique.
     -- Because both halves are immutable after insert, this constraint is stable.
-    UNIQUE (author_name, asset_name)
+    UNIQUE (author_name, asset_name, asset_type)
 );
 
 -- Declared dependency graph (informational; not used for archive serving).

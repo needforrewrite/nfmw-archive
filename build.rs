@@ -24,7 +24,6 @@ fn main() {
             "-r",
             "linux-x64",
             "--self-contained",
-            "-p:PublishAot=true",
             "-o",
             &format!("{workspace}/build"),
         ])
@@ -46,16 +45,11 @@ fn main() {
 
     let bindgen = Command::new("dotnet")
         .args([
-            "publish",
+            "run",
+            "--project",
             &format!("{workspace}/nfm-world/NFMWorld.RustBindGen/NFMWorld.RustBindGen.csproj"),
             "-c",
-            "Release",
-            "-r",
-            "linux-x64",
-            "--self-contained",
-            "-p:PublishAot=true",
-            "-o",
-            &format!("{workspace}/build"),
+            "Release"
         ])
         .output();
 

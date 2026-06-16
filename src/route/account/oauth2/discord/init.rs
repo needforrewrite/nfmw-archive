@@ -24,7 +24,7 @@ pub struct DiscordInitResponse {
     ),
     tag = "discord-oauth"
 )]
-pub async fn handler(State(state): State<AppState>) -> Result<Json<DiscordInitResponse>, AppError> {
+pub async fn discord_oauth_start(State(state): State<AppState>) -> Result<Json<DiscordInitResponse>, AppError> {
     let (pool, config) = {
         (state.db_pool.clone(), state.config.clone())
     };

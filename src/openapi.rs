@@ -16,12 +16,12 @@ use crate::route::{
 #[openapi(
     paths(
         crate::route::root,
-        crate::route::account::local::login::handler,
-        crate::route::account::local::create::handler,
-        crate::route::account::oauth2::discord::init::handler,
-        crate::route::account::oauth2::discord::callback::handler,
-        crate::route::account::oauth2::discord::create_account::handler,
-        crate::route::account::oauth2::poll::handle,
+        crate::route::account::local::login::login_local_account,
+        crate::route::account::local::create::create_local_account,
+        crate::route::account::oauth2::discord::init::discord_oauth_start,
+        crate::route::account::oauth2::discord::callback::discord_login_callback,
+        crate::route::account::oauth2::discord::create_account::discord_create_account,
+        crate::route::account::oauth2::poll::poll_oauth,
     ),
     components(
         schemas(

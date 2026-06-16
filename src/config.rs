@@ -3,6 +3,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Clone)]
 pub struct Config {
     pub port: u16,
+    pub asset_max_size_kb: u32,
     pub discord: DiscordConfig
 }
 
