@@ -31,6 +31,9 @@ pub enum AppError {
     #[error("provided content or asset is larger than the maximum allowed of {0}kB")]
     ContentTooLarge(u32),
 
+    #[error("forbidden: {0}")]
+    Forbidden(String),
+
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
@@ -43,6 +46,7 @@ impl AppError {
             AppError::Unauthorized => StatusCode::UNAUTHORIZED,
             AppError::Conflict(_) => StatusCode::CONFLICT,
             AppError::ContentTooLarge(_) => StatusCode::PAYLOAD_TOO_LARGE,
+            AppError::Forbidden(_) => StatusCode::FORBIDDEN,
             AppError::Database(_) | AppError::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

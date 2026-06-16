@@ -4,7 +4,8 @@ use serde::Deserialize;
 pub struct Config {
     pub port: u16,
     pub asset_max_size_kb: u32,
-    pub discord: DiscordConfig
+    pub discord: DiscordConfig,
+    pub bucket: BucketConfig
 }
 
 #[derive(Deserialize, Clone)]
@@ -12,6 +13,13 @@ pub struct DiscordConfig {
     pub client_id: i64,
     pub client_secret: String,
     pub redirect_uri: String,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct BucketConfig {
+    pub key_id: String,
+    pub app_key: String,
+    pub bucket_name: String
 }
 
 pub fn load_config() -> Config {

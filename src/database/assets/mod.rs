@@ -52,19 +52,20 @@ impl Asset {
         asset_type: AssetType,
         archive_path: &str,
         is_public: bool) -> Result<Self, sqlx::Error> {
-            let asset = sqlx::query_as::<_, Self>(
+            let asset = sqlx::query_as!(
+                Asset,
                 r#"INSERT INTO assets (owner_id, author_name, asset_name, display_name, description, asset_type, archive_path, is_public)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                 RETURNING *"#
+                 RETURNING id, owner_id, author_name, asset_name, display_name, description, asset_type as "asset_type: AssetType", archive_path, is_public, created_at, updated_at"#,
+                owner_id,
+                author_name,
+                asset_name,
+                display_name,
+                description,
+                asset_type as AssetType,
+                archive_path,
+                is_public
             )
-            .bind(owner_id)
-            .bind(author_name)
-            .bind(asset_name)
-            .bind(display_name)
-            .bind(description)
-            .bind(asset_type)
-            .bind(archive_path)
-            .bind(is_public)
             .fetch_one(pool)
             .await?;
 
@@ -72,16 +73,17 @@ impl Asset {
         }
 
     pub async fn get_owned_by_of_type_with_name(pool: &PgPool, owner_id: i64, asset_type: AssetType, asset_name: &str) -> Result<Option<Self>, sqlx::Error> {
-        let asset = sqlx::query_as::<_, Self>(
-            r#"SELECT id, owner_id, author_name, asset_name, display_name, description, asset_type, archive_path, is_public, created_at, updated_at 
-                FROM assets 
+        let asset = sqlx::query_as!(
+            Asset,
+            r#"SELECT id, owner_id, author_name, asset_name, display_name, description, asset_type as "asset_type: AssetType", archive_path, is_public, created_at, updated_at
+                FROM assets
                 WHERE owner_id = $1
                 AND asset_type = $2
-                AND asset_name = $3"#
+                AND asset_name = $3"#,
+            owner_id,
+            asset_type as AssetType,
+            asset_name
         )
-        .bind(&owner_id)
-        .bind(asset_type)
-        .bind(asset_name)
         .fetch_optional(pool)
         .await?;
 
@@ -95,4 +97,21 @@ pub struct AssetTag {
     pub tag_id: i32,
     pub applied_by: Option<i64>,
     pub applied_at: OffsetDateTime,
+}
+impl AssetTag {
+    pub async fn assign_tag_to_asset(pool: &PgPool, asset_id: i64, tag_id: i32, applied_by: i64) -> Result<Self, sqlx::Error> {
+        let asset_tag = sqlx::query_as!(
+            AssetTag,
+            r#"INSERT INTO asset_tags (asset_id, tag_id, applied_by)
+                VALUES ($1, $2, $3)
+                RETURNING *"#,
+            asset_id,
+            tag_id,
+            applied_by
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(asset_tag)
+    }
 }

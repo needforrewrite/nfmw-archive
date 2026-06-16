@@ -43,38 +43,45 @@ fn main() {
         panic!("Failed to publish NFMWorld.Library: {}", e);
     }
 
+    let bindgen_build = Command::new("dotnet")
+        .args([
+            "build",
+            "--property",
+            "WarningLevel=0",
+            &format!("{workspace}/nfm-world/NFMWorld.RustBindGen/NFMWorld.RustBindGen.csproj"),
+        ])
+        .output();
+
+    if let Err(e) = bindgen_build {
+        panic!("Failed to build NFMWorld.RustBindGen: {}", e);
+    }
+
+    let bindgen_build = bindgen_build.unwrap();
+
+    if let Err(e) = bindgen_build.clone().exit_ok() {
+        let stdout = String::from_utf8_lossy(&bindgen_build.stdout);
+        let stderr = String::from_utf8_lossy(&bindgen_build.stderr);
+        eprintln!("stdout: {}", stdout);
+        eprintln!("stderr: {}", stderr);
+        panic!("Failed to build NFMWorld.RustBindGen: {}", e);
+    }
+
     let bindgen = Command::new("dotnet")
         .args([
             "run",
+            "--no-build",
             "--project",
             &format!("{workspace}/nfm-world/NFMWorld.RustBindGen/NFMWorld.RustBindGen.csproj"),
-            "-c",
-            "Release"
         ])
         .output();
 
     if let Err(e) = bindgen {
-        panic!("Failed to publish NFMWorld.RustBindGen: {}", e);
+        panic!("Failed to run NFMWorld.RustBindGen: {}", e);
     }
 
     let bindgen = bindgen.unwrap();
 
-    if let Err(e) = bindgen.clone().exit_ok() {
-        let stdout = String::from_utf8_lossy(&bindgen.stdout);
-        let stderr = String::from_utf8_lossy(&bindgen.stderr);
-        eprintln!("stdout: {}", stdout);
-        eprintln!("stderr: {}", stderr);
-        panic!("Failed to publish NFMWorld.RustBindGen: {}", e);
-    }
-
-    let bindgen_out = Command::new(format!("{workspace}/build/NFMWorld.RustBindGen"))
-        .current_dir(format!("{workspace}/nfm-world"))
-        .output()
-        .unwrap()
-        .exit_ok()
-        .unwrap();
-
-    std::fs::write(format!("{workspace}/src/ffi.rs"), bindgen_out.stdout).unwrap();
+    std::fs::write(format!("{workspace}/src/ffi.rs"), bindgen.stdout).unwrap();
 
     std::fs::rename(
         format!("{path}/NFMWorld.Library.so"),

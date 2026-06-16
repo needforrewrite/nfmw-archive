@@ -8,7 +8,7 @@ use log::info;
 use tokio::sync::Mutex;
 use utoipa::OpenApi;
 
-use crate::config::load_config;
+use crate::{config::load_config, ffi::nfmw_load, store::AssetStore};
 
 pub mod config;
 pub mod crypto;
@@ -33,6 +33,8 @@ async fn main() {
     let db_url =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set in environment variables");
 
+    unsafe { nfmw_load(); };
+
     let db_pool = sqlx::PgPool::connect(&db_url)
         .await
         .expect("Failed to create postgres connection pool");
@@ -47,7 +49,8 @@ async fn main() {
     let state = state::AppState {
         db_pool,
         request_client: reqwest::Client::new(),
-        config: Arc::new(config),
+        config: Arc::new(config.clone()),
+        asset_store: Arc::new(AssetStore::new(config.bucket).unwrap())
     };
 
     let router = Router::new()

@@ -3,7 +3,7 @@ use axum::{Json, extract::{Multipart, State}};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{database::{account::User, assets::{Asset, AssetType}}, extractor::auth::AuthUser, route::error::{AppError, ErrorResponse}, state::AppState};
+use crate::{database::{account::User, assets::{Asset, AssetType}, roles::UserRole, tags::Tag}, extractor::auth::AuthUser, route::error::{AppError, ErrorResponse}, state::AppState, store::AssetStore};
 
 #[derive(ToSchema)]
 pub struct CreateAssetMultipart {
@@ -98,6 +98,41 @@ pub async fn create_asset(
     let author_name = author_name.unwrap();
     let canonical_name = format!("{author_name}/{}", metadata.asset_name.clone());
 
+    let mut nonexistent_tags = vec![];
+    let mut existing_tags = vec![];
+
+    if let Some(tags) = metadata.tags {
+        for tag in tags {
+            let existing_tag = Tag::get_from_name(pool, &tag).await?;
+            if existing_tag.is_none() {
+                nonexistent_tags.push(tag.clone());
+            } else {
+                existing_tags.push(existing_tag.unwrap());
+            }
+        }
+    }
+
+    if !nonexistent_tags.is_empty() {
+        return Err(AppError::BadRequest(format!("The following tags do not exist: {}. Please create them first.", nonexistent_tags.join(", "))))
+    }
+
+
+    if !existing_tags.is_empty() {
+        let user_roles = UserRole::get_roles_for_user_id(pool, auth.user_id).await?;
+        for tag in existing_tags {
+            if let Some(role_id) = tag.required_role_id {
+                if !user_roles.iter().any(|x| x.role_id == role_id) {
+                    return Err(AppError::Forbidden(format!("Cannot assign privileged tag {} as you do not have the correct role to do so.", tag.name)));
+                }
+            }
+        }
+    }
+
+    let object_ref = AssetStore::new_key(metadata.asset_type);
+
+    state.asset_store.put(&object_ref.1, &file_data, "application/octet-stream").await
+        .map_err(|e| AppError::Other(e))?;
+
     let asset = Asset::insert(
         pool,
         auth.user_id, 
@@ -106,7 +141,7 @@ pub async fn create_asset(
         &metadata.display_name, 
         metadata.description.as_ref().map(|x| x.as_str()), 
         metadata.asset_type, 
-        todo!(),
+        &object_ref.1,
         true).await?;
 
     Ok(Json(CreateAssetResponse { asset_id: asset.id, canonical_name }))
