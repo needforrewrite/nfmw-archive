@@ -70,6 +70,7 @@ RUN mkdir /migrations
 COPY --from=builder /app/migrations /migrations
 COPY --from=builder /app/config.toml /config.toml
 COPY --from=builder /app/.env /.env
+COPY --from=builder /app/build/libnfmw.so /usr/lib
 
 # Copy built binary and any required data
 COPY --from=builder /app/target/release/nfmw-archive /usr/local/bin/nfmw-archive
