@@ -140,6 +140,15 @@ pub async fn create_asset(
         }
     }
 
+    let validated_name = validate_asset_name(&metadata.asset_name)?;
+    if metadata.display_name.len() == 0 || metadata.display_name.len() > 32 {
+        return Err(AppError::BadRequest("Display name must not be empty or longer than 32 characters.".into()))
+    }
+
+    if metadata.description.clone().is_some_and(|x| x.len() > 256) {
+         return Err(AppError::BadRequest("Description must not be longer than 256 characters.".into()))
+    }
+
     let object_ref = AssetStore::new_key(metadata.asset_type);
 
     state.asset_store.put(&object_ref.1, &file_data, "application/octet-stream").await
@@ -149,7 +158,7 @@ pub async fn create_asset(
         pool,
         auth.user_id, 
         &author_name, 
-        &metadata.asset_name, 
+        &validated_name, 
         &metadata.display_name, 
         metadata.description.as_ref().map(|x| x.as_str()), 
         metadata.asset_type, 
@@ -157,4 +166,25 @@ pub async fn create_asset(
         true).await?;
 
     Ok(Json(CreateAssetResponse { asset_id: asset.id, canonical_name }))
+}
+
+
+pub fn validate_asset_name(asset_name: &str) -> Result<String, AppError> {
+    if asset_name.len() > 32 {
+        return Err(AppError::BadRequest("Asset name cannot be longer than 32 characters.".into()))
+    }
+
+    if asset_name.is_empty() {
+        return Err(AppError::BadRequest("Asset name cannot be empty.".into()));
+    }
+
+    if !asset_name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return Err(AppError::BadRequest("Asset name contains invalid characters: only alphanumeric characters and underscores are allowed.".into()));
+    }
+
+    if asset_name.chars().all(|c| c == '_') {
+        return Err(AppError::BadRequest("Asset name cannot consist only of underscores.".into()));
+    }
+
+    Ok(asset_name.to_ascii_lowercase())
 }
