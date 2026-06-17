@@ -91,7 +91,7 @@ async fn main() {
             post(route::archive::search_assets::search_assets)
         )
         .route(
-            "/assets/{asset_type}/{asset_author}/{asset_name}.radpack",
+            "/assets/{asset_type}/{asset_author}/{*asset_file}",
             get(route::archive::get_asset::get_asset)
         )
         .with_state(state.clone());

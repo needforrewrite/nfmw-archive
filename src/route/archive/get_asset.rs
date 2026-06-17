@@ -26,8 +26,10 @@ use crate::{database::{assets::{Asset, AssetType}}, extractor::auth::AuthUser, r
 pub async fn get_asset(
     _: AuthUser,
     State(state): State<AppState>,
-    Path((asset_type, asset_author, asset_name)): Path<(String, String, String)>
+    Path((asset_type, asset_author, asset_file)): Path<(String, String, String)>
 ) -> Result<Vec<u8>, AppError> {
+    let asset_name = if let Some(asset_name) = asset_file.strip_suffix(".radpack") { asset_name.to_owned() } else { return Err(AppError::NotFound) };
+
     let asset_type = AssetType::try_from(asset_type)
         .map_err(|_| AppError::NotFound)?;
 
