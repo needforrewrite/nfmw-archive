@@ -17,6 +17,7 @@ pub struct DiscordInitResponse {
 
 #[utoipa::path(
     get,
+    operation_id = "initDiscordOauth",
     path = "/auth/discord/start",
     responses(
         (status = 200, description = "Discord OAuth2 authorization URL and poll ID", body = DiscordInitResponse),

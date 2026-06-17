@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT *\n                FROM asset_tags\n                WHERE tag_id = ANY($1)\n                GROUP BY asset_id, tag_id, applied_by, applied_at\n                HAVING COUNT(DISTINCT tag_id) >= $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "asset_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "tag_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "applied_by",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "applied_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4Array",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "bda032737cfd72b83d26e58766bd715478d1106be3de8b8598248bbaf180b43c"
+}

@@ -10,7 +10,7 @@ use crate::{
         OauthIdentity, User, UserSessions,
         oauth2::{pendingregistration::PendingOauthRegistration, session::OauthSession},
     },
-    route::error::{AppError, ErrorResponse},
+    route::error::AppError,
     state::AppState,
 };
     
@@ -35,17 +35,6 @@ struct DiscordUser {
     email: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    path = "/auth/discord/callback",
-    params(CallbackQuery),
-    responses(
-        (status = 200, description = "OAuth2 callback handled; login or registration initiated", body = String, content_type = "text/plain"),
-        (status = 400, description = "Invalid state or code", body = ErrorResponse, content_type = "application/json"),
-        (status = 500, description = "Internal server error", body = ErrorResponse, content_type = "application/json"),
-    ),
-    tag = "discord-oauth"
-)]
 pub async fn discord_login_callback(
     State(state): State<AppState>,
     Query(params): Query<CallbackQuery>,

@@ -45,6 +45,7 @@ pub struct LoginLocalAccountResponse {
 #[utoipa::path(
     post,
     path = "/auth/local/login",
+    operation_id = "loginLocalAccount",
     request_body = LoginLocalAccountRequest,
     responses(
         (status = 200, description = "Login successful", body = LoginLocalAccountResponse),

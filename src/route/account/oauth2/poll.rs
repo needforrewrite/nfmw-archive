@@ -12,6 +12,7 @@ pub struct PollResponse {
 
 #[utoipa::path(
     get,
+    operation_id = "pollOauth",
     path = "/auth/poll/{poll_id}",
     params(
         ("poll_id" = String, Path, description = "OAuth2 poll session ID returned by /auth/discord/start")

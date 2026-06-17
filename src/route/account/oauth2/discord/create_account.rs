@@ -29,6 +29,7 @@ pub struct DiscordCreateAccountResponse {
 
 #[utoipa::path(
     post,
+    operation_id = "createDiscordAccount",
     path = "/auth/discord/create_account",
     request_body = CreateAccountBody,
     responses(

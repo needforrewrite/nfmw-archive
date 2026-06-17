@@ -3,16 +3,16 @@ use axum::{Json, extract::{Multipart, State}};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{database::{account::User, assets::{Asset, AssetType}, roles::UserRole, tags::Tag}, extractor::auth::AuthUser, route::error::{AppError, ErrorResponse}, state::AppState, store::AssetStore};
+use crate::{database::{account::User, assets::{Asset, AssetType}, roles::UserRole, tags::Tag}, extractor::auth::AuthUser, ffi::{ValidateRadpackArgs, nfmw_validate_radpack}, route::error::{AppError, ErrorResponse}, state::AppState, store::AssetStore};
 
 #[derive(ToSchema)]
 pub struct CreateAssetMultipart {
-    pub metadata: CreateAssetBody,
+    pub metadata: CreateAssetRequest,
     pub file: Vec<u8>,
 }
 
 #[derive(Deserialize, ToSchema)]
-pub struct CreateAssetBody {
+pub struct CreateAssetRequest {
     asset_name: String,
     display_name: String,
     description: Option<String>,
@@ -28,6 +28,7 @@ pub struct CreateAssetResponse {
 
 #[utoipa::path(
     post,
+    operation_id = "createAsset",
     path = "/assets/create",
     params (
         (
@@ -57,7 +58,7 @@ pub async fn create_asset(
     State(state): State<AppState>,
     mut multipart: Multipart,
 ) -> Result<Json<CreateAssetResponse>, AppError> {
-    let mut json_metadata: Option<CreateAssetBody> = None;
+    let mut json_metadata: Option<CreateAssetRequest> = None;
     let mut file_data: Option<Vec<u8>> = None;
 
     while let Some(field) = multipart.next_field().await.map_err(|e| AppError::BadRequest(e.to_string()))? {
@@ -81,7 +82,7 @@ pub async fn create_asset(
     };
 
     let pool = &state.db_pool;
-    let existing = Asset::get_owned_by_of_type_with_name(pool, auth.user_id, metadata.asset_type, &metadata.asset_name).await?.is_some();
+    let existing = Asset::get_owner_id(pool, auth.user_id, metadata.asset_type, &metadata.asset_name).await?.is_some();
 
     if existing {
         return Err(AppError::Conflict("You already own an asset of this type with the same asset name.".into()))
@@ -112,10 +113,21 @@ pub async fn create_asset(
         }
     }
 
+    let radpack_validation = {
+        let radpack_args = ValidateRadpackArgs {
+            radpack_data: file_data.as_ptr(),
+            radpack_data_length: file_data.len() as i32
+        };
+        unsafe { nfmw_validate_radpack(&radpack_args as *const _) }
+    };
+    if radpack_validation.has_error {
+        let exception = radpack_validation.exception;
+        return Err(AppError::BadRequest(format!("Invalid radpack file: {}", String::from_utf8_lossy(&exception.message))))
+    }
+
     if !nonexistent_tags.is_empty() {
         return Err(AppError::BadRequest(format!("The following tags do not exist: {}. Please create them first.", nonexistent_tags.join(", "))))
     }
-
 
     if !existing_tags.is_empty() {
         let user_roles = UserRole::get_roles_for_user_id(pool, auth.user_id).await?;

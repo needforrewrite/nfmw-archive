@@ -26,7 +26,7 @@ impl AssetStore {
 
     pub fn new_key(kind: AssetType) -> (Uuid, String) {
         let id = Uuid::new_v4();
-        let key = format!("assets/{}/{}", kind.to_string(), id);
+        let key = format!("assets/{}/{}.radpack", kind.to_string(), id);
         (id, key)
     }
 

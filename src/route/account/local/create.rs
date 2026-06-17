@@ -53,6 +53,7 @@ pub struct CreateLocalAccountResponse {
 
 #[utoipa::path(
     post,
+    operation_id = "createLocalAccount",
     path = "/auth/local/create_account",
     request_body = CreateLocalAccountRequest,
     responses(

@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use axum::extract::FromRef;
-use tokio::sync::Mutex;
 use crate::{config::Config, store::AssetStore};
 
 #[derive(Clone)]

@@ -5,7 +5,6 @@ use axum::{
     routing::{get, post},
 };
 use log::info;
-use tokio::sync::Mutex;
 use utoipa::OpenApi;
 
 use crate::{config::load_config, ffi::nfmw_load, store::AssetStore};
@@ -86,6 +85,14 @@ async fn main() {
         .route(
             "/assets/create",
             post(route::archive::create_asset::create_asset),
+        )
+        .route(
+            "/assets/search",
+            post(route::archive::search_assets::search_assets)
+        )
+        .route(
+            "/assets/{asset_type}/{asset_author}/{asset_name}.radpack",
+            get(route::archive::get_asset::get_asset)
         )
         .with_state(state.clone());
 
