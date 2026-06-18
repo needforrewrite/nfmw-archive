@@ -3,7 +3,7 @@ use axum::{Json, extract::{Multipart, State}};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{database::{account::User, assets::{Asset, AssetType}, roles::UserRole, tags::Tag}, extractor::auth::AuthUser, ffi::{ValidateRadpackArgs, nfmw_validate_radpack}, route::error::{AppError, ErrorResponse}, state::AppState, store::AssetStore};
+use crate::{database::{account::User, assets::{asset::Asset, AssetType}, roles::UserRole, tags::Tag}, extractor::auth::AuthUser, ffi::{ValidateRadpackArgs, nfmw_validate_radpack}, route::error::{AppError, ErrorResponse}, state::AppState, store::AssetStore};
 
 #[derive(ToSchema)]
 pub struct CreateAssetMultipart {
@@ -12,6 +12,7 @@ pub struct CreateAssetMultipart {
 }
 
 #[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateAssetRequest {
     asset_name: String,
     display_name: String,
@@ -21,6 +22,7 @@ pub struct CreateAssetRequest {
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateAssetResponse {
     asset_id: i64,
     canonical_name: String,

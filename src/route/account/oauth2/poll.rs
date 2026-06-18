@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 use crate::{database::account::oauth2::session::OauthSession, route::error::{AppError, ErrorResponse}, state::AppState};
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct PollResponse {
     pub status: String,
     pub payload: Option<String>,

@@ -1,6 +1,6 @@
 use axum::extract::{Path, State};
 
-use crate::{database::{assets::{Asset, AssetType}}, extractor::auth::AuthUser, route::error::{AppError, ErrorResponse}, state::AppState};
+use crate::{database::{assets::{asset::Asset, AssetType}}, extractor::auth::AuthUser, route::error::{AppError, ErrorResponse}, state::AppState};
 
 #[utoipa::path(
     get,
@@ -21,7 +21,7 @@ use crate::{database::{assets::{Asset, AssetType}}, extractor::auth::AuthUser, r
         (status = 404, description = "No asset found", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
-    tag = "asset-management"
+    tag = "asset-fetching"
 )]
 pub async fn get_asset(
     _: AuthUser,
@@ -36,6 +36,8 @@ pub async fn get_asset(
     let pool = &state.db_pool.clone();
     let asset = Asset::get_author_name(pool, &asset_author, asset_type, &asset_name).await?
         .ok_or(AppError::NotFound)?;
+
+    asset.increment_downloads(pool).await?;
 
     let object_id = &asset.archive_path;
     let data = state.asset_store.get(object_id).await

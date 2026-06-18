@@ -7,7 +7,7 @@ use crate::route::{
             discord::{create_account::DiscordCreateAccountResponse, init::DiscordInitResponse},
             poll::PollResponse,
         },
-    }, archive::{create_asset::CreateAssetResponse, search_assets::SearchAssetsResponse}, error::ErrorResponse
+    }, archive::{create_asset::CreateAssetResponse, curation::like_asset::LikeAssetResponse, search_assets::SearchAssetsResponse}, error::ErrorResponse
 };
 
 #[derive(OpenApi)]
@@ -21,7 +21,8 @@ use crate::route::{
         crate::route::account::oauth2::poll::poll_oauth,
         crate::route::archive::create_asset::create_asset,
         crate::route::archive::get_asset::get_asset,
-        crate::route::archive::search_assets::search_assets
+        crate::route::archive::search_assets::search_assets,
+        crate::route::archive::curation::like_asset::set_asset_liked
     ),
     components(
         schemas(
@@ -36,7 +37,8 @@ use crate::route::{
             DiscordCreateAccountResponse,
             PollResponse,
             CreateAssetResponse,
-            SearchAssetsResponse
+            SearchAssetsResponse,
+            LikeAssetResponse
         )
     ),
     info(
@@ -49,7 +51,9 @@ use crate::route::{
         (name = "local-auth", description = "Local username/password authentication"),
         (name = "discord-oauth", description = "Discord OAuth2 authentication"),
         (name = "oauth-poll", description = "OAuth2 result polling"),
-        (name = "asset-management", description = "Uploading, fetching, and management of assets")
+        (name = "asset-management", description = "Uploading, fetching, and management of assets"),
+        (name = "asset-fetching", description = "Fetching and searching of assets"),
+        (name = "asset-curation", description = "Liking, featuring, and sorting assets by popularity")
     )
 )]
 pub struct ApiDoc;

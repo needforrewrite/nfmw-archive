@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, owner_id, author_name, asset_name, display_name, description, asset_type as \"asset_type: AssetType\", archive_path, is_public, created_at, updated_at\n                FROM assets\n                WHERE author_name = $1\n                AND asset_type = $2\n                AND asset_name = $3",
+  "query": "SELECT id, owner_id, author_name, asset_name, display_name, description, asset_type as \"asset_type: AssetType\", archive_path, downloads, total_likes, is_public, created_at, updated_at\n                FROM assets\n                WHERE display_name ILIKE $1",
   "describe": {
     "columns": [
       {
@@ -60,39 +60,32 @@
       },
       {
         "ordinal": 8,
+        "name": "downloads",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 9,
+        "name": "total_likes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
         "name": "is_public",
         "type_info": "Bool"
       },
       {
-        "ordinal": 9,
+        "ordinal": 11,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 10,
+        "ordinal": 12,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
-        {
-          "Custom": {
-            "name": "asset_type",
-            "kind": {
-              "Enum": [
-                "track",
-                "car",
-                "track_piece",
-                "texture",
-                "sound",
-                "campaign",
-                "wheel"
-              ]
-            }
-          }
-        },
         "Text"
       ]
     },
@@ -107,8 +100,10 @@
       false,
       false,
       false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "61d9f37c55e24b65efd38810d3ee98a04d5083cea46a961195f83d9e5cd4f490"
+  "hash": "1218b299c4f3618490b2f8cba41987aadec6b24fb3109b4fc29994ee0bbf24f0"
 }

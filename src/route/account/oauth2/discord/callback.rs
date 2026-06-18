@@ -15,6 +15,7 @@ use crate::{
 };
     
 #[derive(Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
 pub struct CallbackQuery {
     /// OAuth2 authorization code from Discord
     code: String,
@@ -23,6 +24,7 @@ pub struct CallbackQuery {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct DiscordTokenResponse {
     access_token: String,
     refresh_token: Option<String>,

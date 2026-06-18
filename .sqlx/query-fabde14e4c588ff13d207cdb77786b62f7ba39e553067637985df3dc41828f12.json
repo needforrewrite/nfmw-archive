@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, owner_id, author_name, asset_name, display_name, description, asset_type as \"asset_type: AssetType\", archive_path, is_public, created_at, updated_at\n                FROM assets\n                WHERE id = ANY($1)",
+  "query": "INSERT INTO assets (owner_id, author_name, asset_name, display_name, description, asset_type, archive_path, is_public)\n                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n                 RETURNING id, owner_id, author_name, asset_name, display_name, description, asset_type as \"asset_type: AssetType\", archive_path, is_public, downloads, total_likes, created_at, updated_at",
   "describe": {
     "columns": [
       {
@@ -65,18 +65,50 @@
       },
       {
         "ordinal": 9,
+        "name": "downloads",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
+        "name": "total_likes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 10,
+        "ordinal": 12,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Int8Array"
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "asset_type",
+            "kind": {
+              "Enum": [
+                "track",
+                "car",
+                "track_piece",
+                "texture",
+                "sound",
+                "campaign",
+                "wheel"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Bool"
       ]
     },
     "nullable": [
@@ -90,8 +122,10 @@
       false,
       false,
       false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "0a801e7ba3192d4ea3f365c4328c8e9b244d161254e3ee4afe02a286f50d3988"
+  "hash": "fabde14e4c588ff13d207cdb77786b62f7ba39e553067637985df3dc41828f12"
 }

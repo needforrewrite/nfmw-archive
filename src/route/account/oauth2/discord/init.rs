@@ -10,6 +10,7 @@ use crate::{
 };
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct DiscordInitResponse {
     pub url: String,
     pub poll_id: String,

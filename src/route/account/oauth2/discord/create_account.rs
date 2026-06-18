@@ -16,12 +16,14 @@ use crate::{
 };
 
 #[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateAccountBody {
     pub temp_token: String,
     pub username: String,
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct DiscordCreateAccountResponse {
     pub session_token: String,
     pub username: String,

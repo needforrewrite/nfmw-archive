@@ -2,9 +2,19 @@ use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{database::{account::User, assets::{Asset, AssetType}, tags::Tag}, extractor::auth::AuthUser, route::{error::{AppError::{self, BadRequest}, ErrorResponse}}, state::AppState};
+use crate::{database::{account::User, assets::{asset::Asset, AssetType}, tags::Tag}, extractor::auth::AuthUser, route::{error::{AppError::{self, BadRequest}, ErrorResponse}}, state::AppState};
+
+#[derive(Deserialize, ToSchema, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum SortBy {
+    MostLiked,
+    MostDownloaded,
+    DisplayNameSimilarity,
+    RecentlyCreated
+}
 
 #[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct SearchAssetsRequest {
     owner_name: Option<String>,
     asset_type: AssetType,
@@ -14,10 +24,12 @@ pub struct SearchAssetsRequest {
     #[schema(example = "1 (returns 1st page)")]
     page: Option<i32>,
     #[schema(minimum = 10, maximum = 25)]
-    page_size: Option<i32>
+    page_size: Option<i32>,
+    sort: Option<SortBy>
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct SearchAssetsResponse {
     total_results: i32,
     page: i32,
@@ -28,12 +40,15 @@ pub struct SearchAssetsResponse {
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct SearchAssetsAsset {
     asset_name: String,
     author_name: String,
     asset_type: AssetType,
     description: Option<String>,
-    tags: Vec<String>
+    tags: Vec<String>,
+    total_likes: i64,
+    downloads: i64
 }
 
 #[utoipa::path(
@@ -47,13 +62,14 @@ pub struct SearchAssetsAsset {
             description = "Bearer token for user authentication"
         )
     ),
+    request_body = SearchAssetsRequest,
     responses(
         (status = 200, description = "Assets retrieved successfully", body = SearchAssetsResponse),
         (status = 400, description = "Invalid request", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
-    tag = "asset-management"
+    tag = "asset-fetching"
 )]
 pub async fn search_assets(
     _: AuthUser,
@@ -63,6 +79,7 @@ pub async fn search_assets(
     let mut results: Option<Vec<Asset>> = None;
     let pool = &state.db_pool.clone();
 
+    let sort = filter.sort.unwrap_or(SortBy::RecentlyCreated);
     let mut page_size = 10;
     let mut page_number = 1;
 
@@ -93,9 +110,12 @@ pub async fn search_assets(
         } else {
             results = Some(Asset::filter_by_display_name(pool, &display_name).await?);
         }
-        if let Some(ref mut r) = results {
+        if let Some(ref mut r) = results
+            && sort == SortBy::DisplayNameSimilarity {
             *r = sort_by_similarity(r, &display_name);
         }
+    } else if sort == SortBy::DisplayNameSimilarity {
+        return Err(AppError::BadRequest("Cannot sort by display name similarity if not filtering by display name.".into()));
     }
 
     if let Some(tags) = filter.tags {
@@ -116,7 +136,7 @@ pub async fn search_assets(
     }
 
     let results = results.unwrap_or(vec![]);
-    let results = results.into_iter().filter(|x| x.asset_type == filter.asset_type).collect::<Vec<_>>();
+    let mut results = results.into_iter().filter(|x| x.asset_type == filter.asset_type).collect::<Vec<_>>();
     if results.is_empty() {
         let response = SearchAssetsResponse {
             total_results: 0,
@@ -130,6 +150,14 @@ pub async fn search_assets(
         return Ok(Json(response));
     }
 
+    // we already sorted by display name similarity if that was requested
+    if sort == SortBy::MostLiked {
+        results.sort_by(|x, y| y.total_likes.cmp(&x.total_likes));
+    } else if sort == SortBy::MostDownloaded {
+        results.sort_by(|x, y| y.downloads.cmp(&x.downloads));
+    } else if sort == SortBy::RecentlyCreated {
+        results.sort_by(|x, y| y.created_at.cmp(&x.created_at));
+    }
 
     let total_pages = (results.len() + page_size as usize + 1) / page_size as usize;
     let total_results = results.len();
@@ -151,7 +179,9 @@ pub async fn search_assets(
                 author_name: entry.author_name.clone(),
                 asset_type: entry.asset_type,
                 description: entry.description.clone(),
-                tags: tags.iter().map(|x| x.name.clone()).collect::<Vec<_>>()
+                tags: tags.iter().map(|x| x.name.clone()).collect::<Vec<_>>(),
+                total_likes: entry.total_likes,
+                downloads: entry.downloads
             }
         )
     }

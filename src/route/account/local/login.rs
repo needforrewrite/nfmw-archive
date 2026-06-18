@@ -31,12 +31,14 @@ fn dummy_password_hash() -> &'static str {
 }
 
 #[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginLocalAccountRequest {
     pub username: String,
     pub password: String,
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginLocalAccountResponse {
     pub username: String,
     pub session_token: String,

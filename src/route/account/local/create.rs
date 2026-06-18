@@ -41,12 +41,14 @@ pub fn validate_local_password(password: &str) -> Result<(), String> {
 }
 
 #[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateLocalAccountRequest {
     pub username: String,
     pub password: String,
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateLocalAccountResponse {
     pub username: String,
 }

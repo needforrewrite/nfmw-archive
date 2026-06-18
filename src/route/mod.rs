@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 use crate::state::AppState;
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct HealthResponse {
     pub status: String,
 }
