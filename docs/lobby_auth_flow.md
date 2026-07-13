@@ -1,4 +1,4 @@
-Get a key for the lobby
+# Get a key for the lobby
 
 GET /auth/service-key?service=lobby
 Authorization: Bearer <archive session token>
@@ -6,7 +6,7 @@ Authorization: Bearer <archive session token>
 { "serviceKey": "kP9x…", "expiresInSeconds": 120,
   "service": { "id": "lobby", "url": "http://localhost:7001" } }
 
-Flow 2 — the lobby redeems it
+# The lobby redeems it
 
 POST /auth/service-key/validate
 Authorization: NFMW-HMAC-SHA256 service=lobby,ts=1752436800,sig=a1b2…
@@ -22,7 +22,7 @@ The signing string, which is what the C# side needs to reproduce:
 {METHOD}\n{path+query}\n{serviceId}\n{unixTimestamp}\n{hex(sha256(body))}
 Signed with HMAC-SHA256, hex-encoded. Method, path, query, target service, timestamp and body are all bound in, so a captured signature can't be moved to another route, another service, or another body.
 
-Flow 3 — managing service credentials
+# Managing service credentials
 [[services]]
 id = "lobby"
 url = "http://localhost:7001"
