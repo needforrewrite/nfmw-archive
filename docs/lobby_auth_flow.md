@@ -1,7 +1,7 @@
 # Get a key for the lobby
 
 GET /auth/service-key?service=lobby
-Authorization: Bearer <archive session token>
+Authorization: Bearer token_1234
 
 { "serviceKey": "kP9x…", "expiresInSeconds": 120,
   "service": { "id": "lobby", "url": "http://localhost:7001" } }
