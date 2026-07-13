@@ -107,7 +107,7 @@ pub async fn discord_login_callback(
         let session_token = generate_base64_authentication_token();
         let session_token_hash = hash_token(&session_token);
 
-        UserSessions::upsert(&pool, user.id, &session_token_hash, "discord").await?;
+        UserSessions::create_archive_session(&pool, user.id, &session_token_hash, "discord").await?;
 
         session.set_result(&pool, "login", &session_token).await?;
 

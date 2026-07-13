@@ -1540,6 +1540,7 @@ dependencies = [
  "env",
  "env_logger",
  "hex",
+ "hmac",
  "libc",
  "log",
  "rand_core 0.9.3",

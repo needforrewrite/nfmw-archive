@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM user_sessions WHERE token_hash = $1",
+  "query": "\n            DELETE FROM user_sessions\n            WHERE token_hash = $1 AND audience = $2 AND expires_at > now()\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -46,6 +46,7 @@
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Text"
       ]
     },
@@ -60,5 +61,5 @@
       true
     ]
   },
-  "hash": "5e31c90e6da9c9923ea613e4f947915e9a61b10a42c767a5c1871dffd2288d7c"
+  "hash": "c038861bc0144b825e7b2502e2ed0ed471d66e5a7e4e59cb6696db8d0bb22e23"
 }

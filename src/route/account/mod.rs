@@ -1,5 +1,6 @@
 pub mod oauth2;
 pub mod local;
+pub mod service_key;
 
 pub fn validate_username(username: &str) -> Result<(), String> {
     if username.len() < 3 || username.len() > 32 {

@@ -4,12 +4,15 @@ use axum::{
 use serde_json::json;
 use sqlx::PgPool;
 
-use crate::{crypto::hash_token, database::account::UserSessions};
+use crate::{crypto::hash_token, database::account::{ARCHIVE_AUDIENCE, UserSessions}};
 
 /// Returned to any handler that requires authentication.
 /// Contains only what handlers typically need — expand as required.
 pub struct AuthUser {
     pub user_id: i64,
+    /// The session this request authenticated with. Carried so a handler can mint
+    /// a service key descended from it; see `route::account::service_key`.
+    pub token_hash: String,
 }
 
 /// Rejection type returned when auth fails.
@@ -45,6 +48,13 @@ where
             .map_err(|_| AuthError(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
             .ok_or(AuthError(StatusCode::UNAUTHORIZED, "invalid or expired session"))?;
 
+        // A service key is handed to a third party. It names them as its audience,
+        // and it must buy exactly nothing here — otherwise a lobby holding a
+        // player's key could act as that player against this server.
+        if session.audience != ARCHIVE_AUDIENCE {
+            return Err(AuthError(StatusCode::FORBIDDEN, "token is not scoped to this service"));
+        }
+
         if session.expires_at < time::OffsetDateTime::now_utc() {
             session.delete(&pool).await
                 .map_err(|_| AuthError(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
@@ -55,6 +65,6 @@ where
             .await
             .map_err(|_| AuthError(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
 
-        Ok(AuthUser { user_id: session.user_id })
+        Ok(AuthUser { user_id: session.user_id, token_hash })
     }
 }

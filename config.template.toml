@@ -1,6 +1,33 @@
 port = 8081
 filestore = "/var/www"
+asset_max_size_kb = 8192
+
+# How long a minted service key stays redeemable. It is handed straight to the
+# service and redeemed immediately, so this only needs to cover the round trip.
+service_key_ttl_seconds = 120
+
+# How far a service's signed request timestamp may drift from ours.
+hmac_max_skew_seconds = 30
 
 [discord]
 client_id = 0
 client_secret = ""
+redirect_uri = ""
+
+[bucket]
+key_id = ""
+app_key = ""
+bucket_name = ""
+
+# External services players can be issued scoped keys for.
+#
+# `id` is the audience: clients ask for `?service=lobby` and we hand back both a
+# key and the URL below, so the lobby can move without any client knowing.
+#
+# Generate a secret with:  openssl rand -hex 32
+# To rotate: add the new secret here, restart, move the lobby onto it, then drop
+# the old one. Both are accepted while the list holds both.
+[[services]]
+id = "lobby"
+url = "http://localhost:7001"
+hmac_secrets = ["0000000000000000000000000000000000000000000000000000000000000000"]

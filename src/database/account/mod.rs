@@ -119,40 +119,109 @@ impl LocalCredentials {
     }
 }
 
+/// Audience of a session that acts on this server directly. Anything else is a
+/// service id from config, and such a token is only ever redeemable by that
+/// service — never here.
+pub const ARCHIVE_AUDIENCE: &str = "archive";
+
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct UserSessions {
     pub user_id: i64,
     pub token_hash: String,
+    pub audience: String,
+    pub parent_token_hash: Option<String>,
     pub auth_provider: String,
     pub created_at: OffsetDateTime,
     pub expires_at: OffsetDateTime,
     pub last_seen_at: OffsetDateTime,
 }
 impl UserSessions {
-    pub async fn upsert(
+    /// Logging in replaces the user's archive session outright. The delete
+    /// cascades through parent_token_hash, so every service key minted from the
+    /// old session dies with it.
+    pub async fn create_archive_session(
         pool: &sqlx::PgPool,
         user_id: i64,
         token_hash: &str,
         auth_provider: &str,
     ) -> Result<Self, sqlx::Error> {
-        sqlx::query_as!(
+        let mut tx = pool.begin().await?;
+
+        sqlx::query!(
+            r#"DELETE FROM user_sessions WHERE user_id = $1 AND audience = $2"#,
+            user_id,
+            ARCHIVE_AUDIENCE,
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        let session = sqlx::query_as!(
             UserSessions,
             r#"
-            INSERT INTO user_sessions (user_id, token_hash, auth_provider)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (user_id) DO UPDATE SET
-                token_hash = EXCLUDED.token_hash,
-                auth_provider = EXCLUDED.auth_provider,
-                created_at = now(),
-                last_seen_at = now(),
-                expires_at = now() + INTERVAL '30 days'
+            INSERT INTO user_sessions (user_id, token_hash, audience, auth_provider)
+            VALUES ($1, $2, $3, $4)
             RETURNING *
             "#,
             user_id,
             token_hash,
+            ARCHIVE_AUDIENCE,
             auth_provider,
         )
+        .fetch_one(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(session)
+    }
+
+    /// Mints a key scoped to `audience`, descended from the archive session that
+    /// asked for it. Short-lived by design: it is handed to a third party, and
+    /// [`Self::consume_service_key`] destroys it on first use.
+    pub async fn create_service_key(
+        pool: &sqlx::PgPool,
+        parent: &UserSessions,
+        token_hash: &str,
+        audience: &str,
+        ttl_seconds: i64,
+    ) -> Result<Self, sqlx::Error> {
+        sqlx::query_as!(
+            UserSessions,
+            r#"
+            INSERT INTO user_sessions
+                (user_id, token_hash, audience, parent_token_hash, auth_provider, expires_at)
+            VALUES ($1, $2, $3, $4, $5, now() + make_interval(secs => $6))
+            RETURNING *
+            "#,
+            parent.user_id,
+            token_hash,
+            audience,
+            parent.token_hash,
+            parent.auth_provider,
+            ttl_seconds as f64,
+        )
         .fetch_one(pool)
+        .await
+    }
+
+    /// Redeems a service key for the session behind it, atomically destroying it
+    /// so a second redemption of the same key finds nothing. Matching on
+    /// `audience` is what stops one service redeeming a key minted for another.
+    pub async fn consume_service_key(
+        pool: &sqlx::PgPool,
+        token_hash: &str,
+        audience: &str,
+    ) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query_as!(
+            UserSessions,
+            r#"
+            DELETE FROM user_sessions
+            WHERE token_hash = $1 AND audience = $2 AND expires_at > now()
+            RETURNING *
+            "#,
+            token_hash,
+            audience,
+        )
+        .fetch_optional(pool)
         .await
     }
 
@@ -167,7 +236,14 @@ impl UserSessions {
     }
 
     pub async fn delete(&self, pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-        sqlx::query!(r#"DELETE FROM user_sessions WHERE user_id = $1"#, self.user_id)
+        sqlx::query!(r#"DELETE FROM user_sessions WHERE token_hash = $1"#, self.token_hash)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn delete_expired(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(r#"DELETE FROM user_sessions WHERE expires_at < now()"#)
             .execute(pool)
             .await?;
         Ok(())

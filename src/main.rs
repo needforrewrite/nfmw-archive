@@ -79,6 +79,14 @@ async fn main() {
             get(route::account::oauth2::poll::poll_oauth),
         )
         .route(
+            "/auth/service-key",
+            get(route::account::service_key::create::create_service_key),
+        )
+        .route(
+            "/auth/service-key/validate",
+            post(route::account::service_key::validate::validate_service_key),
+        )
+        .route(
             "/api-docs/openapi.json",
             get(|| async { axum::Json(openapi::ApiDoc::openapi()) }),
         )

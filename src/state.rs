@@ -15,3 +15,9 @@ impl FromRef<AppState> for sqlx::PgPool {
         state.db_pool.clone()
     }
 }
+
+impl FromRef<AppState> for Arc<Config> {
+    fn from_ref(state: &AppState) -> Self {
+        state.config.clone()
+    }
+}

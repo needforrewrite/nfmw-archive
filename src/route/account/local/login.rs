@@ -92,7 +92,7 @@ pub async fn login_local_account(
         let session_token = generate_base64_authentication_token();
         let session_token_hash = hash_token(&session_token);
 
-        UserSessions::upsert(pool, user.id, &session_token_hash, "local")
+        UserSessions::create_archive_session(pool, user.id, &session_token_hash, "local")
             .await
             .map_err(|e| AppError::Database(e))?;
 
